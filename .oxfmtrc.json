@@ -1,0 +1,6 @@
+{
+  "ignorePatterns": ["sonner"],
+  "semi": false,
+  "singleQuote": true,
+  "experimentalSortImports": {}
+}

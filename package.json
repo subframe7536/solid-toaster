@@ -1,0 +1,72 @@
+{
+  "name": "solid-toaster",
+  "version": "0.0.0",
+  "description": "A sonner-like toast component for solid.js",
+  "homepage": "https://github.com/subframe7536/solid-toaster#readme",
+  "bugs": {
+    "url": "https://github.com/subframe7536/solid-toaster/issues"
+  },
+  "license": "MIT",
+  "author": "subf",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/subframe7536/solid-toaster.git"
+  },
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "solid": "./dist/index.jsx",
+      "default": "./dist/index.js"
+    },
+    "./styles.css": "./dist/index.css"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.com"
+  },
+  "scripts": {
+    "build": "tsdown",
+    "dev": "tsdown --watch",
+    "play": "vite",
+    "test": "vitest",
+    "lint": "oxlint",
+    "format": "oxfmt",
+    "typecheck": "tsc --noEmit",
+    "qa": "oxfmt && oxlint --fix && tsc --noEmit",
+    "release": "bun run test --run && bumpp",
+    "prepublishOnly": "bun run build"
+  },
+  "devDependencies": {
+    "@solidjs/testing-library": "^0.8.10",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/user-event": "^14.6.1",
+    "@types/node": "^24.10.7",
+    "@unocss/reset": "^66.6.0",
+    "bumpp": "^10.4.0",
+    "cls-variant": "^1.0.2",
+    "eslint-plugin-solid": "^0.14.5",
+    "oxfmt": "^0.28.0",
+    "oxlint": "^1.43.0",
+    "rolldown-plugin-unocss": "^0.1.0",
+    "tsdown": "^0.20.3",
+    "typescript": "^5.9.3",
+    "unocss": "^66.6.0",
+    "unocss-preset-animations": "^1.3.0",
+    "vite": "^8.0.0-beta.13",
+    "vite-plugin-solid": "^2.11.10",
+    "vitest": "^4.0.17"
+  },
+  "peerDependencies": {
+    "solid-js": "^1.9.11"
+  },
+  "overrides": {
+    "@unocss/inspector": "npm:has-flag",
+    "vite": "^8.0.0-beta.13"
+  }
+}
