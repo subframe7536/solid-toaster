@@ -1,4 +1,4 @@
-import type { Accessor, JSX } from 'solid-js'
+import type { Accessor, Component, JSX } from 'solid-js'
 
 import { For, Show, createEffect, createMemo, createSignal, onCleanup, onMount } from 'solid-js'
 
@@ -96,26 +96,6 @@ function assignOffset(
   })
 
   return styles
-}
-
-function resolveIconValue(icon: unknown): JSX.Element | null | undefined {
-  if (icon === null || icon === undefined) {
-    return icon
-  }
-
-  if (typeof icon === 'function') {
-    return resolveIconValue((icon as () => unknown)())
-  }
-
-  if (Array.isArray(icon)) {
-    return icon.map((value) => resolveIconValue(value)) as unknown as JSX.Element
-  }
-
-  if (typeof Node !== 'undefined' && icon instanceof Node) {
-    return icon.cloneNode(true) as unknown as JSX.Element
-  }
-
-  return icon as JSX.Element
 }
 
 function getScaleYFromTransform(transformValue: string): number {
@@ -226,8 +206,8 @@ function Toast(props: ToastProps) {
   const isVisible = createMemo(() => props.index + 1 <= props.visibleToasts)
   const toastType = createMemo(() => props.toast.type)
   const dismissible = createMemo(() => props.toast.dismissible !== false)
-  const toastClassname = createMemo(() => props.toast.className || '')
-  const toastDescriptionClassname = createMemo(() => props.toast.descriptionClassName || '')
+  const toastClass = createMemo(() => props.toast.class || '')
+  const toastDescriptionClass = createMemo(() => props.toast.descriptionClass || '')
 
   const y = createMemo(() => props.position.split('-')[0] || 'bottom')
   const x = createMemo(() => props.position.split('-')[1] || 'right')
@@ -406,37 +386,36 @@ function Toast(props: ToastProps) {
   })
 
   function getLoadingIcon() {
-    const loadingIcon = resolveIconValue(props.icons?.loading)
-
-    if (props.icons?.loading) {
-      return (
+    return (
+      <Show
+        when={props.icons?.loading}
+        fallback={
+          <Loader
+            class={cn(props.classes?.loader, props.toast.classes?.loader)}
+            visible={toastType() === 'loading'}
+          />
+        }
+      >
         <div
-          class={cn(props.classNames?.loader, props.toast.classNames?.loader, 'sonner-loader')}
+          class={cn(props.classes?.loader, props.toast.classes?.loader, 'sonner-loader')}
           data-visible={toastType() === 'loading'}
         >
-          {loadingIcon}
+          {props.icons?.loading}
         </div>
-      )
-    }
-
-    return (
-      <Loader
-        className={cn(props.classNames?.loader, props.toast.classNames?.loader)}
-        visible={toastType() === 'loading'}
-      />
+      </Show>
     )
   }
 
   const icon = createMemo(() => {
-    return resolveIconValue(
+    return (
       props.toast.icon ||
-        props.icons?.[toastType() as keyof typeof props.icons] ||
-        getAsset(toastType()),
+      props.icons?.[toastType() as keyof typeof props.icons] ||
+      getAsset(toastType())
     )
   })
 
   const closeIcon = createMemo(() => {
-    return resolveIconValue(props.icons?.close ?? CloseIcon)
+    return props.icons?.close ?? CloseIcon()
   })
 
   const styled = createMemo(() => !(props.toast.jsx || props.toast.unstyled || props.unstyled))
@@ -458,7 +437,7 @@ function Toast(props: ToastProps) {
 
     dragStartTime = new Date()
     setOffsetBeforeRemove(offset())
-    event.currentTarget.setPointerCapture(event.pointerId)
+    ;(event.target as HTMLElement).setPointerCapture(event.pointerId)
 
     if ((event.target as HTMLElement).tagName === 'BUTTON') {
       return
@@ -581,18 +560,18 @@ function Toast(props: ToastProps) {
       }}
       tabIndex={0}
       class={cn(
-        props.className,
-        toastClassname(),
-        props.classNames?.toast,
-        props.toast.classNames?.toast,
-        props.classNames?.default,
+        props.class,
+        toastClass(),
+        props.classes?.toast,
+        props.toast.classes?.toast,
+        props.classes?.default,
         toastType() && toastType() !== 'normal' && toastType() !== 'action'
-          ? props.classNames?.[
+          ? props.classes?.[
               toastType() as 'success' | 'info' | 'warning' | 'error' | 'loading' | 'default'
             ]
           : undefined,
         toastType() && toastType() !== 'normal' && toastType() !== 'action'
-          ? props.toast.classNames?.[
+          ? props.toast.classes?.[
               toastType() as 'success' | 'info' | 'warning' | 'error' | 'loading' | 'default'
             ]
           : undefined,
@@ -640,7 +619,7 @@ function Toast(props: ToastProps) {
           aria-label={props.closeButtonAriaLabel}
           data-disabled={disabled()}
           data-close-button
-          class={cn(props.classNames?.closeButton, props.toast.classNames?.closeButton)}
+          class={cn(props.classes?.closeButton, props.toast.classes?.closeButton)}
           onClick={() => {
             if (disabled() || !dismissible()) {
               return
@@ -661,16 +640,16 @@ function Toast(props: ToastProps) {
           (props.icons?.[toastType() as keyof typeof props.icons] !== null || props.toast.icon)
         }
       >
-        <div data-icon class={cn(props.classNames?.icon, props.toast.classNames?.icon)}>
+        <div data-icon class={cn(props.classes?.icon, props.toast.classes?.icon)}>
           <Show when={props.toast.promise || (props.toast.type === 'loading' && !props.toast.icon)}>
-            {resolveIconValue(props.toast.icon) || getLoadingIcon()}
+            {props.toast.icon || getLoadingIcon()}
           </Show>
           <Show when={props.toast.type !== 'loading'}>{icon()}</Show>
         </div>
       </Show>
 
-      <div data-content class={cn(props.classNames?.content, props.toast.classNames?.content)}>
-        <div data-title class={cn(props.classNames?.title, props.toast.classNames?.title)}>
+      <div data-content class={cn(props.classes?.content, props.toast.classes?.content)}>
+        <div data-title class={cn(props.classes?.title, props.toast.classes?.title)}>
           {props.toast.jsx || resolveNode(props.toast.title)}
         </div>
 
@@ -678,10 +657,10 @@ function Toast(props: ToastProps) {
           <div
             data-description
             class={cn(
-              props.descriptionClassName,
-              toastDescriptionClassname(),
-              props.classNames?.description,
-              props.toast.classNames?.description,
+              props.descriptionClass,
+              toastDescriptionClass(),
+              props.classes?.description,
+              props.toast.classes?.description,
             )}
           >
             {resolveNode(props.toast.description)}
@@ -689,14 +668,16 @@ function Toast(props: ToastProps) {
         </Show>
       </div>
 
-      {props.toast.cancel && !isAction(props.toast.cancel) ? props.toast.cancel : null}
+      <Show when={props.toast.cancel && !isAction(props.toast.cancel)}>
+        {props.toast.cancel as unknown as Component}
+      </Show>
 
       <Show when={props.toast.cancel && isAction(props.toast.cancel)}>
         <button
           data-button
           data-cancel
           style={props.toast.cancelButtonStyle || props.cancelButtonStyle}
-          class={cn(props.classNames?.cancelButton, props.toast.classNames?.cancelButton)}
+          class={cn(props.classes?.cancelButton, props.toast.classes?.cancelButton)}
           onClick={(event) => {
             if (!isAction(props.toast.cancel) || !dismissible()) {
               return
@@ -710,14 +691,16 @@ function Toast(props: ToastProps) {
         </button>
       </Show>
 
-      {props.toast.action && !isAction(props.toast.action) ? props.toast.action : null}
+      <Show when={props.toast.action && !isAction(props.toast.action)}>
+        {props.toast.action as unknown as Component}
+      </Show>
 
       <Show when={props.toast.action && isAction(props.toast.action)}>
         <button
           data-button
           data-action
           style={props.toast.actionButtonStyle || props.actionButtonStyle}
-          class={cn(props.classNames?.actionButton, props.toast.classNames?.actionButton)}
+          class={cn(props.classes?.actionButton, props.toast.classes?.actionButton)}
           onClick={(event) => {
             if (!isAction(props.toast.action)) {
               return
@@ -927,7 +910,7 @@ export function Toaster(props: ToasterProps): JSX.Element {
               }}
               dir={dir() === 'auto' ? getDocumentDirection() : dir()}
               tabIndex={-1}
-              class={props.className}
+              class={props.class}
               data-sonner-toaster
               data-sonner-theme={actualTheme()}
               data-y-position={y}
@@ -990,8 +973,8 @@ export function Toaster(props: ToasterProps): JSX.Element {
                     icons={props.icons}
                     defaultRichColors={props.richColors}
                     duration={props.toastOptions?.duration ?? props.duration}
-                    className={props.toastOptions?.className}
-                    descriptionClassName={props.toastOptions?.descriptionClassName}
+                    class={props.toastOptions?.class}
+                    descriptionClass={props.toastOptions?.descriptionClass}
                     invert={props.invert || false}
                     visibleToasts={visibleToasts()}
                     closeButton={props.toastOptions?.closeButton ?? props.closeButton ?? false}
@@ -999,7 +982,7 @@ export function Toaster(props: ToasterProps): JSX.Element {
                     position={positionValue as Position}
                     style={props.toastOptions?.style}
                     unstyled={props.toastOptions?.unstyled}
-                    classNames={props.toastOptions?.classNames}
+                    classes={props.toastOptions?.classNames}
                     cancelButtonStyle={props.toastOptions?.cancelButtonStyle}
                     actionButtonStyle={props.toastOptions?.actionButtonStyle}
                     closeButtonAriaLabel={props.toastOptions?.closeButtonAriaLabel || 'Close toast'}

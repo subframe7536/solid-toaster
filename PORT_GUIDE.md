@@ -1,4 +1,4 @@
-# Porting Guide: React to SolidJS (Rock UI)
+# Porting Guide: React to SolidJS
 
 This guide serves as a reference for porting components from the `base-ui` React implementation to `@subf/base-ui` (SolidJS). It complements the general guidelines in `AGENTS.md`.
 

@@ -14,7 +14,7 @@ export default defineConfig([
   {
     entry,
     platform: 'neutral',
-    plugins: [solid(), unocss({ generateCSS: false })],
+    plugins: [unocss({ generateCSS: false })],
     outExtensions: () => ({ js: '.jsx' }),
     dts: false,
   },

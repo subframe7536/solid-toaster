@@ -103,9 +103,9 @@ export interface ToastT {
   actionButtonStyle?: JSX.CSSProperties
   style?: JSX.CSSProperties
   unstyled?: boolean
-  className?: string
-  classNames?: ToastClassnames
-  descriptionClassName?: string
+  class?: string
+  classes?: ToastClassnames
+  descriptionClass?: string
   position?: Position
   testId?: string
 }
@@ -127,9 +127,9 @@ export interface HeightT {
 }
 
 export interface ToastOptions {
-  className?: string
+  class?: string
   closeButton?: boolean
-  descriptionClassName?: string
+  descriptionClass?: string
   style?: JSX.CSSProperties
   cancelButtonStyle?: JSX.CSSProperties
   actionButtonStyle?: JSX.CSSProperties
@@ -163,7 +163,7 @@ export interface ToasterProps {
   visibleToasts?: number
   closeButton?: boolean
   toastOptions?: ToastOptions
-  className?: string
+  class?: string
   style?: JSX.CSSProperties
   offset?: Offset
   mobileOffset?: Offset
@@ -194,11 +194,11 @@ export interface ToastProps {
   cancelButtonStyle?: JSX.CSSProperties
   actionButtonStyle?: JSX.CSSProperties
   duration?: number
-  className?: string
+  class?: string
   unstyled?: boolean
-  descriptionClassName?: string
+  descriptionClass?: string
   loadingIcon?: JSX.Element
-  classNames?: ToastClassnames
+  classes?: ToastClassnames
   icons?: ToastIcons
   closeButtonAriaLabel?: string
   defaultRichColors?: boolean
@@ -217,5 +217,5 @@ export interface PromiseReturn<ToastData = unknown> {
 }
 
 export function isAction(action: Action | JSX.Element): action is Action {
-  return typeof action === 'object' && action !== null && 'label' in action && 'onClick' in action
+  return (action as Action).label !== undefined
 }

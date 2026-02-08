@@ -62,6 +62,16 @@ function App() {
     })
   }
 
+  function fireTimerToast() {
+    toast('Auto close in 5 seconds', {
+      description: 'Hover to pause timer, then move away to resume.',
+      duration: 5000,
+      onAutoClose: () => {
+        toast.success('Timer completed')
+      },
+    })
+  }
+
   function firePositionedToasts() {
     toast('Top-left toast', { position: 'top-left' })
     toast.success('Bottom-center toast', { position: 'bottom-center' })
@@ -185,6 +195,9 @@ function App() {
           </button>
           <button type="button" onClick={fireActionToast}>
             Action
+          </button>
+          <button type="button" onClick={fireTimerToast}>
+            Timer
           </button>
           <button
             type="button"

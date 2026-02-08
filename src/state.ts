@@ -44,7 +44,7 @@ class Observer {
     this.dismissedToasts = new Set()
   }
 
-  subscribe = (subscriber: (toast: ToastEvent) => void) => {
+  subscribe = (subscriber: (toast: ToastEvent) => void): VoidFunction => {
     this.subscribers.push(subscriber)
 
     return () => {
@@ -53,11 +53,11 @@ class Observer {
     }
   }
 
-  publish = (data: ToastT) => {
+  publish = (data: ToastT): void => {
     this.subscribers.forEach((subscriber) => subscriber(data))
   }
 
-  addToast = (data: ToastT) => {
+  addToast = (data: ToastT): void => {
     this.publish(data)
     this.toasts = [...this.toasts, data]
   }
@@ -69,7 +69,7 @@ class Observer {
       promise?: PromiseT
       jsx?: JSX.Element
     },
-  ) => {
+  ): ToastId => {
     const { message, ...rest } = data
     const id = typeof data.id === 'number' || data.id?.length ? data.id : toastsCounter++
     const alreadyExists = this.toasts.find((toast) => toast.id === id)
@@ -102,7 +102,7 @@ class Observer {
     return id
   }
 
-  dismiss = (id?: ToastId) => {
+  dismiss = (id?: ToastId): ToastId | undefined => {
     if (id !== undefined) {
       this.dismissedToasts.add(id)
       requestAnimationFrame(() => {
@@ -117,31 +117,34 @@ class Observer {
     return id
   }
 
-  message = (message: ToastTitle, data?: ExternalToast) => {
+  message = (message: ToastTitle, data?: ExternalToast): ToastId => {
     return this.create({ ...data, message })
   }
 
-  error = (message: ToastTitle, data?: ExternalToast) => {
+  error = (message: ToastTitle, data?: ExternalToast): ToastId => {
     return this.create({ ...data, message, type: 'error' })
   }
 
-  success = (message: ToastTitle, data?: ExternalToast) => {
+  success = (message: ToastTitle, data?: ExternalToast): ToastId => {
     return this.create({ ...data, type: 'success', message })
   }
 
-  info = (message: ToastTitle, data?: ExternalToast) => {
+  info = (message: ToastTitle, data?: ExternalToast): ToastId => {
     return this.create({ ...data, type: 'info', message })
   }
 
-  warning = (message: ToastTitle, data?: ExternalToast) => {
+  warning = (message: ToastTitle, data?: ExternalToast): ToastId => {
     return this.create({ ...data, type: 'warning', message })
   }
 
-  loading = (message: ToastTitle, data?: ExternalToast) => {
+  loading = (message: ToastTitle, data?: ExternalToast): ToastId => {
     return this.create({ ...data, type: 'loading', message })
   }
 
-  promise = <ToastData>(promise: PromiseT<ToastData>, data?: PromiseData<ToastData>) => {
+  promise = <ToastData>(
+    promise: PromiseT<ToastData>,
+    data?: PromiseData<ToastData>,
+  ): PromiseReturn<ToastData> | undefined => {
     if (!data) {
       return
     }
@@ -283,20 +286,20 @@ class Observer {
     return Object.assign(id, { unwrap }) as ToastId & PromiseReturn<ToastData>
   }
 
-  custom = (jsx: (id: ToastId) => JSX.Element, data?: ExternalToast) => {
+  custom = (jsx: (id: ToastId) => JSX.Element, data?: ExternalToast): ToastId => {
     const id = data?.id || toastsCounter++
     this.create({ jsx: jsx(id), ...data, id })
     return id
   }
 
-  getActiveToasts = () => {
+  getActiveToasts = (): ToastT[] => {
     return this.toasts.filter((toast) => !this.dismissedToasts.has(toast.id))
   }
 }
 
 export const ToastState: Observer = new Observer()
 
-const toastFunction = (message: ToastTitle, data?: ExternalToast) => {
+function toastFunction(message: ToastTitle, data?: ExternalToast): ToastId {
   const id = data?.id || toastsCounter++
 
   ToastState.addToast({
@@ -308,8 +311,13 @@ const toastFunction = (message: ToastTitle, data?: ExternalToast) => {
   return id
 }
 
-const getHistory = () => ToastState.toasts
-const getToasts = () => ToastState.getActiveToasts()
+function getHistory(): ToastT[] {
+  return ToastState.toasts
+}
+
+function getToasts(): ToastT[] {
+  return ToastState.getActiveToasts()
+}
 
 type ToastFunction = typeof toastFunction & {
   success: typeof ToastState.success

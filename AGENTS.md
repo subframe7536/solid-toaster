@@ -3,14 +3,7 @@
 ## Project intent
 
 - This repository is a **SolidJS port of Sonner**.
-- Upstream React reference implementation lives in the `sonner/` git submodule.
 - Prefer behavior/API parity with upstream unless there is a Solid-specific reason to diverge.
-
-## Source of truth
-
-- Read from `sonner/src/*` to understand expected behavior.
-- Implement new work in `src/*` (do not edit upstream files in `sonner/`).
-- Keep public API aligned with Sonner naming where practical (`Toaster`, `toast.*`, options shape).
 
 ## Working rules
 

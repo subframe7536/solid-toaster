@@ -5,16 +5,16 @@ import type { ToastTypes } from './types'
 export const getAsset = (type?: ToastTypes): JSX.Element | null => {
   switch (type) {
     case 'success':
-      return SuccessIcon
+      return <SuccessIcon />
 
     case 'info':
-      return InfoIcon
+      return <InfoIcon />
 
     case 'warning':
-      return WarningIcon
+      return <WarningIcon />
 
     case 'error':
-      return ErrorIcon
+      return <ErrorIcon />
 
     default:
       return null
@@ -23,10 +23,10 @@ export const getAsset = (type?: ToastTypes): JSX.Element | null => {
 
 const bars = Array.from({ length: 12 }, () => 0)
 
-export function Loader(props: { visible: boolean; className?: string }) {
+export function Loader(props: { visible: boolean; class?: string }) {
   return (
     <div
-      class={['sonner-loading-wrapper', props.className].filter(Boolean).join(' ')}
+      class={['sonner-loading-wrapper', props.class].filter(Boolean).join(' ')}
       data-visible={props.visible}
     >
       <div class="sonner-spinner">
@@ -38,7 +38,7 @@ export function Loader(props: { visible: boolean; className?: string }) {
   )
 }
 
-const SuccessIcon = (
+const SuccessIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     viewBox="0 0 20 20"
@@ -54,7 +54,7 @@ const SuccessIcon = (
   </svg>
 )
 
-const WarningIcon = (
+const WarningIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     viewBox="0 0 24 24"
@@ -70,7 +70,7 @@ const WarningIcon = (
   </svg>
 )
 
-const InfoIcon = (
+const InfoIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     viewBox="0 0 20 20"
@@ -86,7 +86,7 @@ const InfoIcon = (
   </svg>
 )
 
-const ErrorIcon = (
+const ErrorIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     viewBox="0 0 20 20"
@@ -102,7 +102,7 @@ const ErrorIcon = (
   </svg>
 )
 
-export const CloseIcon = (
+export const CloseIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     width="12"
