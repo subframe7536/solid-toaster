@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 
-import { ToastState, toast } from '../src/state'
+import { ToastCore, toast } from '../src/state'
 import { resetToastState } from './helpers/toast-state'
 
 const waitForAnimationFrame = () => new Promise((resolve) => setTimeout(resolve, 0))
@@ -66,7 +66,7 @@ describe('toast state', () => {
   })
 
   it('supports helper methods for each variant type', () => {
-    toast.message('Message toast')
+    toast('Message toast')
     toast.error('Error toast')
     toast.info('Info toast')
     toast.warning('Warning toast')
@@ -93,7 +93,7 @@ describe('toast state', () => {
 
   it('publishes dismiss events for one toast and all toasts', async () => {
     const events: Array<{ id: string; dismiss?: boolean }> = []
-    const unsubscribe = ToastState.subscribe((event) => {
+    const unsubscribe = ToastCore.subscribe((event) => {
       events.push(event as { id: string; dismiss?: boolean })
     })
 
@@ -118,7 +118,7 @@ describe('toast state', () => {
 
     expect(toast.getToasts()).toHaveLength(0)
 
-    toast.message('Second', { id: 'stable-id' })
+    toast('Second', { id: 'stable-id' })
 
     expect(toast.getToasts()).toHaveLength(1)
     expect(toast.getToasts()[0]?.title).toBe('Second')

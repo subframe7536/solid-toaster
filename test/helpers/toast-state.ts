@@ -1,7 +1,7 @@
-import { ToastState } from '../../src/state'
+import { ToastCore } from '../../src/state'
 
 export function resetToastState() {
-  ToastState.toasts = []
-  ToastState.dismissedToasts.clear()
-  ToastState.subscribers = []
+  ToastCore.toasts = []
+  ToastCore.dismissedToasts.clear()
+  ToastCore.subscribers = []
 }

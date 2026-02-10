@@ -3,7 +3,9 @@ import { render } from 'solid-js/web'
 
 import type { Position, ToasterProps } from '../src'
 
-import { Toaster, toast } from '../src'
+import { CompactToaster, Toaster } from '../src'
+import { toast } from '../src/state'
+import '../src/styles/styles.css'
 
 const positions: Position[] = [
   'top-left',
@@ -25,20 +27,13 @@ function App() {
 
   function firePromiseToast() {
     toast.promise(
-      new Promise<{ name: string }>((resolve, reject) => {
-        setTimeout(() => {
-          if (Math.random() < 0.4) {
-            reject(new Error('Upload failed'))
-            return
-          }
-
-          resolve({ name: 'Report.pdf' })
-        }, 1300)
+      new Promise<{ name: string }>((resolve) => {
+        setTimeout(() => resolve({ name: 'Solid toaster' }), 1200)
       }),
       {
-        loading: 'Uploading report…',
-        success: (data) => `${data.name} uploaded`,
-        error: 'Upload failed',
+        loading: 'Fetching data... ',
+        success: (value) => `Loaded ${value.name}`,
+        error: (error) => `Failed: ${(error as Error).message}`,
       },
     )
   }
@@ -56,7 +51,7 @@ function App() {
       cancel: {
         label: 'Dismiss',
         onClick() {
-          toast.message('Dismissed')
+          toast('Dismissed')
         },
       },
     })
@@ -245,6 +240,8 @@ function App() {
         offset={{ top: 80, left: 24 }}
         mobileOffset={16}
       />
+
+      <CompactToaster id="compact" theme={theme()} position="bottom-left" />
     </main>
   )
 }

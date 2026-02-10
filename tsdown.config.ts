@@ -1,4 +1,3 @@
-import { unocss } from 'rolldown-plugin-unocss'
 import { defineConfig } from 'tsdown'
 import solid from 'vite-plugin-solid'
 
@@ -8,13 +7,15 @@ export default defineConfig([
   {
     entry,
     platform: 'browser',
-    plugins: [solid(), unocss({ generateCSS: false })],
+    plugins: [solid()],
+    external: ['defu'],
+    copy: ['./src/styles/styles.css', './src/styles/base.css', './src/styles/theme.css'],
     dts: { oxc: true },
   },
   {
     entry,
     platform: 'neutral',
-    plugins: [unocss({ generateCSS: false })],
+    external: ['defu'],
     outExtensions: () => ({ js: '.jsx' }),
     dts: false,
   },

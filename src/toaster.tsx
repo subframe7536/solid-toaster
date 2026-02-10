@@ -1,22 +1,25 @@
 import type { Accessor, Component, JSX } from 'solid-js'
 
+import defu from 'defu'
 import { For, Show, createEffect, createMemo, createSignal, onCleanup, onMount } from 'solid-js'
 
 import type {
   HeightT,
   Position,
   SwipeDirection,
-  ToasterProps,
+  ToastEvent,
   ToastProps,
+  ToastCoreStore,
   ToastT,
   ToastToDismiss,
+  ToasterProps,
+  ToasterTargetConfig,
 } from './types'
 
 import { CloseIcon, getAsset, Loader } from './assets'
 import { useIsDocumentHidden } from './hooks'
-import { ToastState } from './state'
+import { ToastCore } from './state'
 import { isAction } from './types'
-import './styles.css'
 
 const VISIBLE_TOASTS_AMOUNT = 3
 const VIEWPORT_OFFSET = '24px'
@@ -139,39 +142,65 @@ function measureElementHeight(element: HTMLElement): number {
   return rawHeight / scaleY
 }
 
-export function useToaster(): { toasts: Accessor<ToastT[]> } {
+function canRenderNode(node: unknown): boolean {
+  return node !== null && node !== undefined
+}
+
+function resolveToastEvent(
+  store: ToastCoreStore,
+  event: ToastEvent,
+  setToasts: (updater: (currentToasts: ToastT[]) => ToastT[]) => void,
+  mode: 'remove' | 'mark-delete',
+) {
+  if ((event as ToastToDismiss).dismiss) {
+    requestAnimationFrame(() => {
+      setToasts((currentToasts) => {
+        if (mode === 'remove') {
+          return currentToasts.filter((toastItem) => toastItem.id !== event.id)
+        }
+
+        return currentToasts.map((toastItem) => {
+          if (toastItem.id !== event.id) {
+            return toastItem
+          }
+
+          return {
+            ...toastItem,
+            delete: true,
+          }
+        })
+      })
+    })
+
+    return
+  }
+
+  setToasts((currentToasts) => {
+    const existingIndex = currentToasts.findIndex((toastItem) => toastItem.id === event.id)
+
+    if (existingIndex !== -1) {
+      return currentToasts.map((toastItem, index) => {
+        if (index !== existingIndex) {
+          return toastItem
+        }
+
+        return {
+          ...toastItem,
+          ...(event as ToastT),
+        }
+      })
+    }
+
+    return [event as ToastT, ...currentToasts]
+  })
+}
+
+export function useToaster(store: ToastCoreStore = ToastCore): { toasts: Accessor<ToastT[]> } {
   const [toasts, setToasts] = createSignal<ToastT[]>([])
 
   onMount(() => {
-    const unsubscribe = ToastState.subscribe((event) => {
-      if ((event as ToastToDismiss).dismiss) {
-        requestAnimationFrame(() => {
-          setToasts((currentToasts) =>
-            currentToasts.filter((toastItem) => toastItem.id !== event.id),
-          )
-        })
-
-        return
-      }
-
-      setToasts((currentToasts) => {
-        const existingIndex = currentToasts.findIndex((toastItem) => toastItem.id === event.id)
-
-        if (existingIndex !== -1) {
-          return currentToasts.map((toastItem, index) => {
-            if (index !== existingIndex) {
-              return toastItem
-            }
-
-            return {
-              ...toastItem,
-              ...(event as ToastT),
-            }
-          })
-        }
-
-        return [event as ToastT, ...currentToasts]
-      })
+    const unsubscribe = store.subscribe((event) => {
+      resolveToastEvent(store, event, setToasts, 'remove')
     })
 
     onCleanup(unsubscribe)
@@ -386,36 +415,39 @@ function Toast(props: ToastProps) {
   })
 
   function getLoadingIcon() {
-    return (
-      <Show
-        when={props.icons?.loading}
-        fallback={
-          <Loader
-            class={cn(props.classes?.loader, props.toast.classes?.loader)}
-            visible={toastType() === 'loading'}
-          />
-        }
-      >
+    const loadingIcon = props.toast.icon || props.icons?.loading
+
+    if (canRenderNode(loadingIcon)) {
+      return (
         <div
           class={cn(props.classes?.loader, props.toast.classes?.loader, 'sonner-loader')}
           data-visible={toastType() === 'loading'}
         >
-          {props.icons?.loading}
+          {loadingIcon}
         </div>
-      </Show>
-    )
+      )
+    }
+
+    if (!props.loadingIcon) {
+      return null
+    }
+
+    return props.loadingIcon({
+      class: cn(props.classes?.loader, props.toast.classes?.loader),
+      visible: toastType() === 'loading',
+    })
   }
 
   const icon = createMemo(() => {
     return (
       props.toast.icon ||
       props.icons?.[toastType() as keyof typeof props.icons] ||
-      getAsset(toastType())
+      props.iconResolver?.(toastType())
     )
   })
 
   const closeIcon = createMemo(() => {
-    return props.icons?.close ?? CloseIcon()
+    return props.closeIcon ?? props.icons?.close ?? null
   })
 
   const styled = createMemo(() => !(props.toast.jsx || props.toast.unstyled || props.unstyled))
@@ -629,7 +661,7 @@ function Toast(props: ToastProps) {
             props.toast.onDismiss?.(props.toast)
           }}
         >
-          {closeIcon()}
+          <Show when={canRenderNode(closeIcon())}>{closeIcon()}</Show>
         </button>
       </Show>
 
@@ -637,12 +669,12 @@ function Toast(props: ToastProps) {
         when={
           (toastType() || props.toast.icon || props.toast.promise) &&
           props.toast.icon !== null &&
-          (props.icons?.[toastType() as keyof typeof props.icons] !== null || props.toast.icon)
+          canRenderNode(icon())
         }
       >
         <div data-icon class={cn(props.classes?.icon, props.toast.classes?.icon)}>
           <Show when={props.toast.promise || (props.toast.type === 'loading' && !props.toast.icon)}>
-            {props.toast.icon || getLoadingIcon()}
+            {getLoadingIcon()}
           </Show>
           <Show when={props.toast.type !== 'loading'}>{icon()}</Show>
         </div>
@@ -722,10 +754,16 @@ function Toast(props: ToastProps) {
   )
 }
 
-export function Toaster(props: ToasterProps): JSX.Element {
+function BaseToaster(props: ToasterProps & { defaultConfig: ToasterTargetConfig }): JSX.Element {
   let listRef: HTMLOListElement | null = null
   let lastFocusedElement: HTMLElement | null = null
   let isFocusWithin = false
+
+  const store = createMemo(() => props.store || ToastCore)
+
+  const resolvedToasterConfig = createMemo<ToasterTargetConfig>(() =>
+    defu({}, props.defaultConfig, props.config),
+  )
 
   const [toasts, setToasts] = createSignal<ToastT[]>([])
   const [heights, setHeightsState] = createSignal<HeightT[]>([])
@@ -734,11 +772,17 @@ export function Toaster(props: ToasterProps): JSX.Element {
 
   const [actualTheme, setActualTheme] = createSignal<'light' | 'dark'>('light')
 
-  const position = createMemo(() => props.position || 'bottom-right')
-  const hotkey = createMemo(() => props.hotkey || ['altKey', 'KeyT'])
-  const visibleToasts = createMemo(() => props.visibleToasts || VISIBLE_TOASTS_AMOUNT)
-  const dir = createMemo(() => props.dir || getDocumentDirection())
-  const gap = createMemo(() => props.gap || GAP)
+  const position = createMemo(
+    () => props.position || resolvedToasterConfig().position || 'bottom-right',
+  )
+  const hotkey = createMemo(
+    () => props.hotkey || resolvedToasterConfig().hotkey || ['altKey', 'KeyT'],
+  )
+  const visibleToasts = createMemo(
+    () => props.visibleToasts || resolvedToasterConfig().visibleToasts || VISIBLE_TOASTS_AMOUNT,
+  )
+  const dir = createMemo(() => props.dir || resolvedToasterConfig().dir || getDocumentDirection())
+  const gap = createMemo(() => props.gap || resolvedToasterConfig().gap || GAP)
 
   const hotkeyLabel = createMemo(() => hotkey().join('+').replace(/Key/g, '').replace(/Digit/g, ''))
 
@@ -767,7 +811,7 @@ export function Toaster(props: ToasterProps): JSX.Element {
       const toastItem = currentToasts.find((toastValue) => toastValue.id === toastToRemove.id)
 
       if (!toastItem?.delete) {
-        ToastState.dismiss(toastToRemove.id)
+        store().dismiss(toastToRemove.id)
       }
 
       return currentToasts.filter((toastValue) => toastValue.id !== toastToRemove.id)
@@ -775,50 +819,19 @@ export function Toaster(props: ToasterProps): JSX.Element {
   }
 
   onMount(() => {
-    const unsubscribe = ToastState.subscribe((event) => {
-      if ((event as ToastToDismiss).dismiss) {
-        requestAnimationFrame(() => {
-          setToasts((currentToasts) => {
-            return currentToasts.map((toastItem) => {
-              if (toastItem.id !== event.id) {
-                return toastItem
-              }
-
-              return {
-                ...toastItem,
-                delete: true,
-              }
-            })
-          })
-        })
-
-        return
-      }
-
-      setToasts((currentToasts) => {
-        const existingIndex = currentToasts.findIndex((toastItem) => toastItem.id === event.id)
-
-        if (existingIndex !== -1) {
-          return [
-            ...currentToasts.slice(0, existingIndex),
-            {
-              ...currentToasts[existingIndex],
-              ...(event as ToastT),
-            },
-            ...currentToasts.slice(existingIndex + 1),
-          ]
-        }
-
-        return [event as ToastT, ...currentToasts]
-      })
+    const activeStore = store()
+    const unsubscribe = activeStore.subscribe((event) => {
+      resolveToastEvent(activeStore, event, setToasts, 'mark-delete')
     })
 
     onCleanup(unsubscribe)
   })
 
   createEffect(() => {
-    if (props.theme !== 'system') {
-      setActualTheme((props.theme || 'light') as 'light' | 'dark')
+    const theme = props.theme || resolvedToasterConfig().theme
+
+    if (theme !== 'system') {
+      setActualTheme((theme || 'light') as 'light' | 'dark')
       return
     }
 
@@ -878,10 +891,48 @@ export function Toaster(props: ToasterProps): JSX.Element {
     })
   })
 
+  const resolvedIcons = createMemo(() => ({
+    ...resolvedToasterConfig().icons,
+    ...props.icons,
+  }))
+
+  const iconResolver = createMemo(
+    () => props.config?.iconResolver || resolvedToasterConfig().iconResolver,
+  )
+  const closeIcon = createMemo(
+    () => props.config?.closeIcon ?? props.icons?.close ?? resolvedToasterConfig().closeIcon,
+  )
+  const loadingIcon = createMemo(
+    () => props.config?.loadingIcon || resolvedToasterConfig().loadingIcon,
+  )
+
+  const toasterClass = createMemo(() => props.class || resolvedToasterConfig().class)
+  const toasterStyle = createMemo(() => ({
+    ...resolvedToasterConfig().style,
+    ...props.style,
+  }))
+  const offset = createMemo(() => props.offset || resolvedToasterConfig().offset)
+  const mobileOffset = createMemo(() => props.mobileOffset || resolvedToasterConfig().mobileOffset)
+
+  const resolvedToastOptions = createMemo(() => ({
+    ...resolvedToasterConfig().toastOptions,
+    ...props.toastOptions,
+  }))
+
+  const closeButtonAriaLabel = createMemo(
+    () =>
+      resolvedToastOptions().closeButtonAriaLabel ||
+      props.config?.closeButtonAriaLabel ||
+      resolvedToasterConfig().closeButtonAriaLabel ||
+      'Close toast',
+  )
+
   return (
     <section
       aria-label={
-        props.customAriaLabel ?? `${props.containerAriaLabel || 'Notifications'} ${hotkeyLabel()}`
+        props.customAriaLabel ||
+        resolvedToasterConfig().customAriaLabel ||
+        `${props.containerAriaLabel || resolvedToasterConfig().containerAriaLabel || 'Notifications'} ${hotkeyLabel()}`
       }
       tabIndex={-1}
       aria-live="polite"
@@ -910,7 +961,7 @@ export function Toaster(props: ToasterProps): JSX.Element {
               }}
               dir={dir() === 'auto' ? getDocumentDirection() : dir()}
               tabIndex={-1}
-              class={props.class}
+              class={toasterClass()}
               data-sonner-toaster
               data-sonner-theme={actualTheme()}
               data-y-position={y}
@@ -919,8 +970,8 @@ export function Toaster(props: ToasterProps): JSX.Element {
                 '--front-toast-height': `${heights()[0]?.height || 0}px`,
                 '--width': `${TOAST_WIDTH}px`,
                 '--gap': `${gap()}px`,
-                ...props.style,
-                ...assignOffset(props.offset, props.mobileOffset),
+                ...toasterStyle(),
+                ...assignOffset(offset(), mobileOffset()),
               }}
               onBlur={(event) => {
                 if (isFocusWithin && !event.currentTarget.contains(event.relatedTarget as Node)) {
@@ -970,32 +1021,53 @@ export function Toaster(props: ToasterProps): JSX.Element {
                   <Toast
                     toast={toastItem}
                     index={toastIndex()}
-                    icons={props.icons}
-                    defaultRichColors={props.richColors}
-                    duration={props.toastOptions?.duration ?? props.duration}
-                    class={props.toastOptions?.class}
-                    descriptionClass={props.toastOptions?.descriptionClass}
-                    invert={props.invert || false}
+                    icons={resolvedIcons()}
+                    iconResolver={iconResolver()}
+                    closeIcon={closeIcon()}
+                    loadingIcon={loadingIcon()}
+                    defaultRichColors={
+                      props.richColors ??
+                      props.config?.richColors ??
+                      resolvedToasterConfig().richColors
+                    }
+                    duration={
+                      resolvedToastOptions().duration ??
+                      props.duration ??
+                      resolvedToasterConfig().duration
+                    }
+                    class={resolvedToastOptions().class}
+                    descriptionClass={resolvedToastOptions().descriptionClass}
+                    invert={props.invert || resolvedToasterConfig().invert || false}
                     visibleToasts={visibleToasts()}
-                    closeButton={props.toastOptions?.closeButton ?? props.closeButton ?? false}
+                    closeButton={
+                      resolvedToastOptions().closeButton ??
+                      props.closeButton ??
+                      props.config?.closeButton ??
+                      resolvedToasterConfig().closeButton ??
+                      false
+                    }
                     interacting={interacting()}
                     position={positionValue as Position}
-                    style={props.toastOptions?.style}
-                    unstyled={props.toastOptions?.unstyled}
-                    classes={props.toastOptions?.classNames}
-                    cancelButtonStyle={props.toastOptions?.cancelButtonStyle}
-                    actionButtonStyle={props.toastOptions?.actionButtonStyle}
-                    closeButtonAriaLabel={props.toastOptions?.closeButtonAriaLabel || 'Close toast'}
+                    style={resolvedToastOptions().style}
+                    unstyled={resolvedToastOptions().unstyled ?? false}
+                    classes={resolvedToastOptions().classNames}
+                    cancelButtonStyle={resolvedToastOptions().cancelButtonStyle}
+                    actionButtonStyle={resolvedToastOptions().actionButtonStyle}
+                    closeButtonAriaLabel={closeButtonAriaLabel()}
                     removeToast={removeToast}
                     toasts={filteredToasts().filter(
                       (toastValue) => toastValue.position === toastItem.position,
                     )}
                     heights={heights().filter((height) => height.position === toastItem.position)}
                     setHeights={setHeights}
-                    expandByDefault={props.expand || false}
+                    expandByDefault={props.expand || resolvedToasterConfig().expand || false}
                     gap={gap()}
                     expanded={expanded()}
-                    swipeDirections={props.swipeDirections}
+                    swipeDirections={
+                      props.swipeDirections ||
+                      props.config?.swipeDirections ||
+                      resolvedToasterConfig().swipeDirections
+                    }
                   />
                 )}
               </For>
@@ -1005,4 +1077,35 @@ export function Toaster(props: ToasterProps): JSX.Element {
       </For>
     </section>
   )
+}
+
+const defaultToasterConfig: ToasterTargetConfig = {
+  theme: 'light',
+  position: 'bottom-right',
+  hotkey: ['altKey', 'KeyT'],
+  richColors: false,
+  expand: false,
+  duration: 4000,
+  gap: 14,
+  visibleToasts: 3,
+  closeButton: false,
+  toastOptions: { closeButtonAriaLabel: 'Close toast' },
+}
+
+export function Toaster(props: ToasterProps): JSX.Element {
+  return (
+    <BaseToaster
+      {...props}
+      defaultConfig={{
+        ...defaultToasterConfig,
+        iconResolver: (type) => getAsset(type),
+        closeIcon: CloseIcon(),
+        loadingIcon: Loader,
+      }}
+    />
+  )
+}
+
+export function CompactToaster(props: ToasterProps): JSX.Element {
+  return <BaseToaster {...props} defaultConfig={defaultToasterConfig} />
 }

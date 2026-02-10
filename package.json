@@ -16,6 +16,9 @@
     "dist"
   ],
   "type": "module",
+  "sideEffects": [
+    "**/*.css"
+  ],
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
@@ -24,7 +27,9 @@
       "solid": "./dist/index.jsx",
       "default": "./dist/index.js"
     },
-    "./styles.css": "./dist/index.css"
+    "./styles.css": "./dist/styles.css",
+    "./base.css": "./dist/base.css",
+    "./theme.css": "./dist/theme.css"
   },
   "publishConfig": {
     "access": "public",
@@ -38,7 +43,7 @@
     "lint": "oxlint",
     "format": "oxfmt",
     "typecheck": "tsc --noEmit",
-    "qa": "oxfmt && oxlint --fix && tsc --noEmit",
+    "qa": "oxfmt && oxlint --fix --deny-warnings && tsc --noEmit",
     "release": "bun run test --run && bumpp",
     "prepublishOnly": "bun run build"
   },
@@ -50,6 +55,7 @@
     "@unocss/reset": "^66.6.0",
     "bumpp": "^10.4.0",
     "cls-variant": "^1.0.2",
+    "defu": "^6.1.4",
     "eslint-plugin-solid": "^0.14.5",
     "jsdom": "^28.0.0",
     "oxfmt": "^0.28.0",

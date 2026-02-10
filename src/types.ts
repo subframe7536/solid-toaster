@@ -12,6 +12,8 @@ export type ToastTypes =
 
 export type ToastId = number | string
 
+export type ToastTitle = (() => JSX.Element) | JSX.Element
+
 export type PromiseT<Data = any> = Promise<Data> | (() => Promise<Data>)
 
 export interface PromiseIExtendedResult extends ExternalToast {
@@ -66,12 +68,44 @@ export interface ToastClassnames {
 }
 
 export interface ToastIcons {
-  success?: JSX.Element
-  info?: JSX.Element
-  warning?: JSX.Element
-  error?: JSX.Element
-  loading?: JSX.Element
-  close?: JSX.Element
+  success?: JSX.Element | null
+  info?: JSX.Element | null
+  warning?: JSX.Element | null
+  error?: JSX.Element | null
+  loading?: JSX.Element | null
+  close?: JSX.Element | null
+}
+
+export type ToastIconResolver = (type?: ToastTypes) => JSX.Element | null
+
+export type ToastLoadingIconRenderer = (props: { visible: boolean; class?: string }) => JSX.Element
+
+export interface ToasterTargetConfig {
+  id?: string
+  invert?: boolean
+  theme?: 'light' | 'dark' | 'system'
+  position?: Position
+  hotkey?: string[]
+  expand?: boolean
+  duration?: number
+  gap?: number
+  visibleToasts?: number
+  toastOptions?: ToastOptions
+  class?: string
+  style?: JSX.CSSProperties
+  offset?: Offset
+  mobileOffset?: Offset
+  dir?: 'rtl' | 'ltr' | 'auto'
+  swipeDirections?: SwipeDirection[]
+  customAriaLabel?: string
+  containerAriaLabel?: string
+  icons?: ToastIcons
+  iconResolver?: ToastIconResolver
+  closeIcon?: JSX.Element | null
+  loadingIcon?: ToastLoadingIconRenderer
+  richColors?: boolean
+  closeButton?: boolean
+  closeButtonAriaLabel?: string
 }
 
 export interface Action {
@@ -83,9 +117,9 @@ export interface Action {
 export interface ToastT {
   id: ToastId
   toasterId?: string
-  title?: (() => JSX.Element) | JSX.Element
+  title?: ToastTitle
   type?: ToastTypes
-  icon?: JSX.Element
+  icon?: JSX.Element | null
   jsx?: JSX.Element
   richColors?: boolean
   invert?: boolean
@@ -115,6 +149,29 @@ export interface ToastToDismiss {
   dismiss: boolean
 }
 
+export type ToastEvent = ToastT | ToastToDismiss
+
+export interface ToastCoreStore {
+  subscribers: Array<(toast: ToastEvent) => void>
+  toasts: ToastT[]
+  dismissedToasts: Set<ToastId>
+  createId: () => ToastId
+  subscribe: (subscriber: (toast: ToastEvent) => void) => VoidFunction
+  publish: (data: ToastT) => void
+  addToast: (data: ToastT) => void
+  create: (
+    data: ExternalToast & {
+      message?: ToastTitle
+      type?: ToastTypes
+      promise?: PromiseT
+      jsx?: JSX.Element
+    },
+  ) => ToastId
+  dismiss: (id?: ToastId) => ToastId | undefined
+  getActiveToasts: () => ToastT[]
+  getHistory: () => ToastT[]
+}
+
 export type ExternalToast = Omit<ToastT, 'id' | 'type' | 'title' | 'jsx' | 'delete' | 'promise'> & {
   id?: ToastId
   toasterId?: string
@@ -140,7 +197,7 @@ export interface ToastOptions {
   toasterId?: string
 }
 
-type Offset =
+export type Offset =
   | {
       top?: string | number
       right?: string | number
@@ -152,6 +209,8 @@ type Offset =
 
 export interface ToasterProps {
   id?: string
+  store?: ToastCoreStore
+  config?: Partial<ToasterTargetConfig>
   invert?: boolean
   theme?: 'light' | 'dark' | 'system'
   position?: Position
@@ -197,7 +256,9 @@ export interface ToastProps {
   class?: string
   unstyled?: boolean
   descriptionClass?: string
-  loadingIcon?: JSX.Element
+  loadingIcon?: ToastLoadingIconRenderer
+  iconResolver?: ToastIconResolver
+  closeIcon?: JSX.Element | null
   classes?: ToastClassnames
   icons?: ToastIcons
   closeButtonAriaLabel?: string
@@ -217,5 +278,12 @@ export interface PromiseReturn<ToastData = unknown> {
 }
 
 export function isAction(action: Action | JSX.Element): action is Action {
-  return (action as Action).label !== undefined
+  return (
+    action !== null &&
+    typeof action === 'object' &&
+    'label' in action &&
+    (action as Action).label !== undefined &&
+    'onClick' in action &&
+    typeof (action as Action).onClick === 'function'
+  )
 }
