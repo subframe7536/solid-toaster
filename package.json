@@ -1,6 +1,6 @@
 {
   "name": "solid-toaster",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "An advanced sonner-like toast component for solid.js",
   "homepage": "https://github.com/subframe7536/solid-toaster#readme",
   "bugs": {
@@ -41,7 +41,7 @@
     "format": "oxfmt",
     "typecheck": "tsc --noEmit",
     "qa": "oxfmt && oxlint --fix --deny-warnings && tsc --noEmit",
-    "release": "bun run test --run && bumpp",
+    "release": "bun run test --run && bumpp --all",
     "prepublishOnly": "bun run build"
   },
   "devDependencies": {
