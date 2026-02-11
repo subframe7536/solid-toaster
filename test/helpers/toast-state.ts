@@ -1,7 +1,7 @@
-import { ToastCore } from '../../src/state'
+import { DEFAULT_TOAST_CORE } from '../../src/state'
 
 export function resetToastState() {
-  ToastCore.toasts = []
-  ToastCore.dismissedToasts.clear()
-  ToastCore.subscribers = []
+  DEFAULT_TOAST_CORE.toasts = []
+  DEFAULT_TOAST_CORE.dismissedToasts.clear()
+  DEFAULT_TOAST_CORE.subscribers = []
 }

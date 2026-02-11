@@ -38,7 +38,7 @@ describe('Toaster default config variants', () => {
   })
 
   it('still lets local config override defaults', async () => {
-    render(() => <CompactToaster config={{ closeButton: true }} />)
+    render(() => <CompactToaster closeButton />)
 
     toast('Compact override button', {
       duration: Number.POSITIVE_INFINITY,

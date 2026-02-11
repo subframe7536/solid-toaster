@@ -5,7 +5,7 @@ import solid from 'vite-plugin-solid'
 import { defineConfig } from 'vitest/config'
 
 export default defineConfig({
-  plugins: [uno({ inspector: false }), solid()],
+  plugins: [uno({ inspector: false }), solid({ hot: false })],
   resolve: {
     alias: {
       '~': path.resolve(__dirname, './src'),

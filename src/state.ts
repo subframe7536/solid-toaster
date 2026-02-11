@@ -5,7 +5,7 @@ import type {
   PromiseT,
   ToastEvent,
   ToastId,
-  ToastCoreStore,
+  ToastCore,
   ToastT,
   ToastTitle,
   ToastTypes,
@@ -27,7 +27,7 @@ function scheduleAnimationFrame(callback: () => void) {
   setTimeout(callback, 0)
 }
 
-export function createToastCore(): ToastCoreStore {
+export function createToastCore(): ToastCore {
   let toastsCounter = 1
 
   const subscribers: Array<(toast: ToastEvent) => void> = []
@@ -49,7 +49,7 @@ export function createToastCore(): ToastCoreStore {
     toasts = [...toasts, data]
   }
 
-  const create: ToastCoreStore['create'] = (
+  const create: ToastCore['create'] = (
     data: ExternalToast & {
       message?: ToastTitle
       type?: ToastTypes
@@ -90,7 +90,7 @@ export function createToastCore(): ToastCoreStore {
     return id
   }
 
-  const dismiss: ToastCoreStore['dismiss'] = (id?: ToastId): ToastId | undefined => {
+  const dismiss: ToastCore['dismiss'] = (id?: ToastId): ToastId | undefined => {
     if (id !== undefined) {
       dismissedToasts.add(id)
       scheduleAnimationFrame(() => {
@@ -143,7 +143,7 @@ export function createToastCore(): ToastCoreStore {
   }
 }
 
-export const ToastCore: ToastCoreStore = createToastCore()
+export const DEFAULT_TOAST_CORE: ToastCore = createToastCore()
 
 function isHttpResponse(data: unknown): data is Response {
   return (
@@ -161,38 +161,38 @@ function isPromiseExtendedResult(value: unknown): value is PromiseIExtendedResul
 }
 
 const message = (message: ToastTitle, data?: ExternalToast): ToastId => {
-  return ToastCore.create({ ...data, message })
+  return DEFAULT_TOAST_CORE.create({ ...data, message })
 }
 
 const error = (message: ToastTitle, data?: ExternalToast): ToastId => {
-  return ToastCore.create({ ...data, message, type: 'error' })
+  return DEFAULT_TOAST_CORE.create({ ...data, message, type: 'error' })
 }
 
 const success = (message: ToastTitle, data?: ExternalToast): ToastId => {
-  return ToastCore.create({ ...data, message, type: 'success' })
+  return DEFAULT_TOAST_CORE.create({ ...data, message, type: 'success' })
 }
 
 const info = (message: ToastTitle, data?: ExternalToast): ToastId => {
-  return ToastCore.create({ ...data, message, type: 'info' })
+  return DEFAULT_TOAST_CORE.create({ ...data, message, type: 'info' })
 }
 
 const warning = (message: ToastTitle, data?: ExternalToast): ToastId => {
-  return ToastCore.create({ ...data, message, type: 'warning' })
+  return DEFAULT_TOAST_CORE.create({ ...data, message, type: 'warning' })
 }
 
 const loading = (message: ToastTitle, data?: ExternalToast): ToastId => {
-  return ToastCore.create({ ...data, message, type: 'loading' })
+  return DEFAULT_TOAST_CORE.create({ ...data, message, type: 'loading' })
 }
 
 const custom = (jsx: (id: ToastId) => JSX.Element, data?: ExternalToast): ToastId => {
-  const id = data?.id || ToastCore.createId()
-  ToastCore.create({ jsx: jsx(id), ...data, id })
+  const id = data?.id || DEFAULT_TOAST_CORE.createId()
+  DEFAULT_TOAST_CORE.create({ jsx: jsx(id), ...data, id })
   return id
 }
 
-const dismiss: (id?: ToastId | undefined) => ToastId | undefined = ToastCore.dismiss
-const getHistory: (id?: ToastId | undefined) => ToastT[] = ToastCore.getHistory
-const getToasts: (id?: ToastId | undefined) => ToastT[] = ToastCore.getActiveToasts
+const dismiss: (id?: ToastId | undefined) => ToastId | undefined = DEFAULT_TOAST_CORE.dismiss
+const getHistory: (id?: ToastId | undefined) => ToastT[] = DEFAULT_TOAST_CORE.getHistory
+const getToasts: (id?: ToastId | undefined) => ToastT[] = DEFAULT_TOAST_CORE.getActiveToasts
 
 const promise = <ToastData>(
   promiseValue: PromiseT<ToastData>,
@@ -205,7 +205,7 @@ const promise = <ToastData>(
   let id: ToastId | undefined
 
   if (data.loading !== undefined) {
-    id = ToastCore.create({
+    id = DEFAULT_TOAST_CORE.create({
       ...data,
       promise: promiseValue,
       type: 'loading',
@@ -227,7 +227,7 @@ const promise = <ToastData>(
 
       if (isPromiseExtendedResult(response)) {
         shouldDismiss = false
-        ToastCore.create({ id, type: 'default', ...response })
+        DEFAULT_TOAST_CORE.create({ id, type: 'default', ...response })
         return
       }
 
@@ -248,7 +248,7 @@ const promise = <ToastData>(
           ? promiseData
           : { message: promiseData }
 
-        ToastCore.create({ id, type: 'error', description, ...toastSettings })
+        DEFAULT_TOAST_CORE.create({ id, type: 'error', description, ...toastSettings })
         return
       }
 
@@ -267,7 +267,7 @@ const promise = <ToastData>(
           ? promiseData
           : { message: promiseData }
 
-        ToastCore.create({ id, type: 'error', description, ...toastSettings })
+        DEFAULT_TOAST_CORE.create({ id, type: 'error', description, ...toastSettings })
         return
       }
 
@@ -286,7 +286,7 @@ const promise = <ToastData>(
           ? promiseData
           : { message: promiseData }
 
-        ToastCore.create({ id, type: 'success', description, ...toastSettings })
+        DEFAULT_TOAST_CORE.create({ id, type: 'success', description, ...toastSettings })
       }
     })
     .catch(async (errorValue) => {
@@ -307,12 +307,12 @@ const promise = <ToastData>(
           ? promiseData
           : { message: promiseData }
 
-        ToastCore.create({ id, type: 'error', description, ...toastSettings })
+        DEFAULT_TOAST_CORE.create({ id, type: 'error', description, ...toastSettings })
       }
     })
     .finally(() => {
       if (shouldDismiss) {
-        ToastCore.dismiss(id)
+        DEFAULT_TOAST_CORE.dismiss(id)
         id = undefined
       }
 

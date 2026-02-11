@@ -49,7 +49,7 @@ export type Position =
 
 export type SwipeDirection = 'top' | 'right' | 'bottom' | 'left'
 
-export interface ToastClassnames {
+export interface ToastClasses {
   toast?: string
   title?: string
   description?: string
@@ -76,11 +76,7 @@ export interface ToastIcons {
   close?: JSX.Element | null
 }
 
-export type ToastIconResolver = (type?: ToastTypes) => JSX.Element | null
-
-export type ToastLoadingIconRenderer = (props: { visible: boolean; class?: string }) => JSX.Element
-
-export interface ToasterTargetConfig {
+export interface ToasterProps {
   id?: string
   invert?: boolean
   theme?: 'light' | 'dark' | 'system'
@@ -90,9 +86,15 @@ export interface ToasterTargetConfig {
   duration?: number
   gap?: number
   visibleToasts?: number
-  toastOptions?: ToastOptions
   class?: string
   style?: JSX.CSSProperties
+  toastClass?: string
+  toastStyle?: JSX.CSSProperties
+  descriptionClass?: string
+  cancelButtonStyle?: JSX.CSSProperties
+  actionButtonStyle?: JSX.CSSProperties
+  unstyled?: boolean
+  classes?: ToastClasses
   offset?: Offset
   mobileOffset?: Offset
   dir?: 'rtl' | 'ltr' | 'auto'
@@ -100,9 +102,6 @@ export interface ToasterTargetConfig {
   customAriaLabel?: string
   containerAriaLabel?: string
   icons?: ToastIcons
-  iconResolver?: ToastIconResolver
-  closeIcon?: JSX.Element | null
-  loadingIcon?: ToastLoadingIconRenderer
   richColors?: boolean
   closeButton?: boolean
   closeButtonAriaLabel?: string
@@ -138,7 +137,7 @@ export interface ToastT {
   style?: JSX.CSSProperties
   unstyled?: boolean
   class?: string
-  classes?: ToastClassnames
+  classes?: ToastClasses
   descriptionClass?: string
   position?: Position
   testId?: string
@@ -151,7 +150,7 @@ export interface ToastToDismiss {
 
 export type ToastEvent = ToastT | ToastToDismiss
 
-export interface ToastCoreStore {
+export interface ToastCore {
   subscribers: Array<(toast: ToastEvent) => void>
   toasts: ToastT[]
   dismissedToasts: Set<ToastId>
@@ -183,20 +182,6 @@ export interface HeightT {
   position?: Position
 }
 
-export interface ToastOptions {
-  class?: string
-  closeButton?: boolean
-  descriptionClass?: string
-  style?: JSX.CSSProperties
-  cancelButtonStyle?: JSX.CSSProperties
-  actionButtonStyle?: JSX.CSSProperties
-  duration?: number
-  unstyled?: boolean
-  classNames?: ToastClassnames
-  closeButtonAriaLabel?: string
-  toasterId?: string
-}
-
 export type Offset =
   | {
       top?: string | number
@@ -207,33 +192,7 @@ export type Offset =
   | string
   | number
 
-export interface ToasterProps {
-  id?: string
-  store?: ToastCoreStore
-  config?: Partial<ToasterTargetConfig>
-  invert?: boolean
-  theme?: 'light' | 'dark' | 'system'
-  position?: Position
-  hotkey?: string[]
-  richColors?: boolean
-  expand?: boolean
-  duration?: number
-  gap?: number
-  visibleToasts?: number
-  closeButton?: boolean
-  toastOptions?: ToastOptions
-  class?: string
-  style?: JSX.CSSProperties
-  offset?: Offset
-  mobileOffset?: Offset
-  dir?: 'rtl' | 'ltr' | 'auto'
-  swipeDirections?: SwipeDirection[]
-  icons?: ToastIcons
-  customAriaLabel?: string
-  containerAriaLabel?: string
-}
-
-export interface ToastProps {
+export interface ToastItemProps {
   toast: ToastT
   toasts: ToastT[]
   index: number
@@ -256,10 +215,7 @@ export interface ToastProps {
   class?: string
   unstyled?: boolean
   descriptionClass?: string
-  loadingIcon?: ToastLoadingIconRenderer
-  iconResolver?: ToastIconResolver
-  closeIcon?: JSX.Element | null
-  classes?: ToastClassnames
+  classes?: ToastClasses
   icons?: ToastIcons
   closeButtonAriaLabel?: string
   defaultRichColors?: boolean

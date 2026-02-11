@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 
-import { ToastCore, toast } from '../src/state'
+import { DEFAULT_TOAST_CORE, toast } from '../src/state'
 
 import { resetToastState } from './helpers/toast-state'
 
@@ -94,7 +94,7 @@ describe('toast state', () => {
 
   it('publishes dismiss events for one toast and all toasts', async () => {
     const events: Array<{ id: string; dismiss?: boolean }> = []
-    const unsubscribe = ToastCore.subscribe((event) => {
+    const unsubscribe = DEFAULT_TOAST_CORE.subscribe((event) => {
       events.push(event as { id: string; dismiss?: boolean })
     })
 

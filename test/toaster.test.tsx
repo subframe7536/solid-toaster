@@ -1,5 +1,5 @@
-import '../src/styles.base.css'
-import '../src/theme-default.css'
+import '../src/styles/base.css'
+import '../src/styles/theme.css'
 
 import { fireEvent, render, screen, waitFor } from '@solidjs/testing-library'
 import type { JSX } from 'solid-js'
@@ -55,7 +55,7 @@ describe('Toaster', () => {
   })
 
   it('shows close button with custom aria label', async () => {
-    render(() => <Toaster closeButton toastOptions={{ closeButtonAriaLabel: 'Dismiss notice' }} />)
+    render(() => <Toaster closeButton closeButtonAriaLabel="Dismiss notice" />)
 
     toast('Closable')
 

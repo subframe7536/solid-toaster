@@ -1,31 +1,7 @@
 import type { JSX } from 'solid-js'
 import { For } from 'solid-js'
 
-import type { ToastTypes } from './types'
-
-export const getAsset = (type?: ToastTypes): JSX.Element | null => {
-  switch (type) {
-    case 'success':
-      return <SuccessIcon />
-
-    case 'info':
-      return <InfoIcon />
-
-    case 'warning':
-      return <WarningIcon />
-
-    case 'error':
-      return <ErrorIcon />
-
-    case 'loading':
-      return <Loader visible />
-
-    default:
-      return null
-  }
-}
-
-export function Loader(props: { visible: boolean; class?: string }) {
+export const LoadingIcon = () => {
   const LOADER_SIZE = 16
   const bars = Array.from({ length: 12 }, (_, i) => i + 1)
 
@@ -45,21 +21,18 @@ export function Loader(props: { visible: boolean; class?: string }) {
     width: `${LOADER_SIZE}px`,
   }
 
-  const barBaseStyle: JSX.CSSProperties = {
-    animation: 'sonner-spin 1.2s linear infinite',
-    background: 'var(--gray11)',
-    'border-radius': '6px',
-    height: '8%',
-    left: '-10%',
-    position: 'absolute',
-    top: '-3.9%',
-    width: '24%',
-  }
   const getBarStyle = (index: number): JSX.CSSProperties => {
     const delay = -1.2 + index * 0.1
     const angle = index === 0 ? 0.0001 : index * 30
     return {
-      ...barBaseStyle,
+      animation: 'sonner-spin 1.2s linear infinite',
+      background: 'var(--gray11)',
+      'border-radius': '6px',
+      height: '8%',
+      left: '-10%',
+      position: 'absolute',
+      top: '-3.9%',
+      width: '24%',
       'animation-delay': `${delay}s`,
       transform: `rotate(${angle}deg) translate(146%)`,
     }
@@ -68,7 +41,7 @@ export function Loader(props: { visible: boolean; class?: string }) {
   return (
     <>
       <style>{`@keyframes sonner-fade-out{0%{opacity:1;transform:scale(1)}to{opacity:0;transform:scale(.8)}}@keyframes sonner-spin{0%{opacity:1}to{opacity:.15}}@media (prefers-reduced-motion){*{animation:none!important}}`}</style>
-      <div class={props.class} data-visible={props.visible} style={wrapperStyle}>
+      <div style={wrapperStyle}>
         <div style={spinnerStyle}>
           <For each={bars}>{(index) => <div data-index={index} style={getBarStyle(index)} />}</For>
         </div>
@@ -77,7 +50,7 @@ export function Loader(props: { visible: boolean; class?: string }) {
   )
 }
 
-const SuccessIcon = () => (
+export const SuccessIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     viewBox="0 0 20 20"
@@ -93,7 +66,7 @@ const SuccessIcon = () => (
   </svg>
 )
 
-const WarningIcon = () => (
+export const WarningIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     viewBox="0 0 24 24"
@@ -109,7 +82,7 @@ const WarningIcon = () => (
   </svg>
 )
 
-const InfoIcon = () => (
+export const InfoIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     viewBox="0 0 20 20"
@@ -125,7 +98,7 @@ const InfoIcon = () => (
   </svg>
 )
 
-const ErrorIcon = () => (
+export const ErrorIcon = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
     viewBox="0 0 20 20"
