@@ -27,6 +27,7 @@ function App() {
   const [expand, setExpand] = createSignal(false)
   const [richColors, setRichColors] = createSignal(false)
   const [closeButton, setCloseButton] = createSignal(false)
+  const [preventDuplicate, setPreventDuplicate] = createSignal(false)
 
   function firePromiseToast() {
     toast.promise(
@@ -145,6 +146,16 @@ function App() {
               onChange={(event) => setCloseButton(event.currentTarget.checked)}
             />
             Close button
+          </label>
+
+          <label class="flex items-center gap-1.5 text-sm cursor-pointer">
+            <input
+              type="checkbox"
+              class="w-4 h-4"
+              checked={preventDuplicate()}
+              onChange={(event) => setPreventDuplicate(event.currentTarget.checked)}
+            />
+            Prevent duplicates
           </label>
 
           <button
@@ -273,6 +284,7 @@ function App() {
         richColors={richColors()}
         closeButton={closeButton()}
         visibleToasts={4}
+        preventDuplicate={preventDuplicate()}
       />
 
       <Toaster id="global" theme={theme()} position="top-right" />

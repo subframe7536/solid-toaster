@@ -98,6 +98,7 @@ html[dir='rtl'],
   position: absolute;
   opacity: 0;
   transform: var(--y);
+  transform-origin: center;
   touch-action: none;
   transition:
     transform 400ms,
@@ -298,6 +299,10 @@ html[dir='rtl'],
   color: var(--error-text);
 }
 
+[data-sonner-toast][data-bump='true'] {
+  animation: sonner-toast-bump 240ms ease;
+}
+
 @keyframes sonner-fade-in {
   0% {
     opacity: 0;
@@ -306,6 +311,18 @@ html[dir='rtl'],
   100% {
     opacity: 1;
     transform: scale(1);
+  }
+}
+
+@keyframes sonner-toast-bump {
+  0% {
+    transform: var(--y) scale(1);
+  }
+  45% {
+    transform: var(--y) scale(1.04);
+  }
+  100% {
+    transform: var(--y) scale(1);
   }
 }
 

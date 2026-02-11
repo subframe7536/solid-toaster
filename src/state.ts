@@ -5,7 +5,6 @@ import type {
   PromiseT,
   ToastEvent,
   ToastId,
-  ToastCore,
   ToastT,
   ToastTitle,
   ToastTypes,
@@ -13,6 +12,25 @@ import type {
   PromiseIExtendedResult,
   PromiseData,
 } from './types'
+
+export interface ToastCore {
+  subscribers: Array<(toast: ToastEvent) => void>
+  toasts: ToastT[]
+  dismissedToasts: Set<ToastId>
+  createId: () => ToastId
+  subscribe: (subscriber: (toast: ToastEvent) => void) => VoidFunction
+  create: (
+    data: ExternalToast & {
+      message?: ToastTitle
+      type?: ToastTypes
+      promise?: PromiseT
+      jsx?: JSX.Element
+    },
+  ) => ToastId
+  dismiss: (id?: ToastId) => ToastId | undefined
+  getActiveToasts: () => ToastT[]
+  getHistory: () => ToastT[]
+}
 
 function hasValidToastId(id: ToastId | undefined): id is ToastId {
   return typeof id === 'number' || (typeof id === 'string' && id.length > 0)
@@ -130,8 +148,6 @@ export function createToastCore(): ToastCore {
         }
       }
     },
-    publish,
-    addToast,
     create,
     dismiss,
     getActiveToasts() {

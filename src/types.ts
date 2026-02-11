@@ -86,11 +86,11 @@ export interface ToasterProps {
   duration?: number
   gap?: number
   visibleToasts?: number
+  preventDuplicate?: boolean
   class?: string
   style?: JSX.CSSProperties
   toastClass?: string
   toastStyle?: JSX.CSSProperties
-  descriptionClass?: string
   cancelButtonStyle?: JSX.CSSProperties
   actionButtonStyle?: JSX.CSSProperties
   unstyled?: boolean
@@ -138,7 +138,6 @@ export interface ToastT {
   unstyled?: boolean
   class?: string
   classes?: ToastClasses
-  descriptionClass?: string
   position?: Position
   testId?: string
 }
@@ -149,27 +148,6 @@ export interface ToastToDismiss {
 }
 
 export type ToastEvent = ToastT | ToastToDismiss
-
-export interface ToastCore {
-  subscribers: Array<(toast: ToastEvent) => void>
-  toasts: ToastT[]
-  dismissedToasts: Set<ToastId>
-  createId: () => ToastId
-  subscribe: (subscriber: (toast: ToastEvent) => void) => VoidFunction
-  publish: (data: ToastT) => void
-  addToast: (data: ToastT) => void
-  create: (
-    data: ExternalToast & {
-      message?: ToastTitle
-      type?: ToastTypes
-      promise?: PromiseT
-      jsx?: JSX.Element
-    },
-  ) => ToastId
-  dismiss: (id?: ToastId) => ToastId | undefined
-  getActiveToasts: () => ToastT[]
-  getHistory: () => ToastT[]
-}
 
 export type ExternalToast = Omit<ToastT, 'id' | 'type' | 'title' | 'jsx' | 'delete' | 'promise'> & {
   id?: ToastId
@@ -208,26 +186,19 @@ export interface ToastItemProps {
   expandByDefault: boolean
   closeButton: boolean
   interacting: boolean
+  highlightKey?: number
+  highlightedToastId?: ToastId
   style?: JSX.CSSProperties
   cancelButtonStyle?: JSX.CSSProperties
   actionButtonStyle?: JSX.CSSProperties
   duration?: number
   class?: string
   unstyled?: boolean
-  descriptionClass?: string
   classes?: ToastClasses
   icons?: ToastIcons
   closeButtonAriaLabel?: string
   defaultRichColors?: boolean
 }
-
-export enum SwipeStateTypes {
-  SwipedOut = 'SwipedOut',
-  SwipedBack = 'SwipedBack',
-  NotSwiped = 'NotSwiped',
-}
-
-export type Theme = 'light' | 'dark'
 
 export interface PromiseReturn<ToastData = unknown> {
   unwrap: () => Promise<ToastData>

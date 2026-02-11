@@ -3,6 +3,7 @@ import { For, Show, createEffect, createMemo, createSignal, onCleanup, onMount }
 
 import { CloseIcon, ErrorIcon, InfoIcon, LoadingIcon, SuccessIcon, WarningIcon } from './assets'
 import { useIsDocumentHidden } from './hooks'
+import type { ToastCore } from './state'
 import { DEFAULT_TOAST_CORE } from './state'
 import type {
   HeightT,
@@ -10,7 +11,7 @@ import type {
   SwipeDirection,
   ToastEvent,
   ToastItemProps,
-  ToastCore,
+  ToastId,
   ToastT,
   ToastToDismiss,
   ToasterProps,
@@ -28,6 +29,41 @@ const TIME_BEFORE_UNMOUNT = 200
 
 function cn(...classes: Array<string | undefined | false>) {
   return classes.filter(Boolean).join(' ')
+}
+
+function resolveToastPosition(toast: ToastT, fallback?: Position): Position {
+  return toast.position ?? fallback ?? 'bottom-right'
+}
+
+function matchesToasterId(toast: ToastT, toasterId?: string) {
+  if (toasterId) {
+    return toast.toasterId === toasterId
+  }
+
+  return !toast.toasterId
+}
+
+function isSameToastValue(first: unknown, second: unknown) {
+  if (typeof first === 'string' || typeof first === 'number') {
+    if (typeof second === 'string' || typeof second === 'number') {
+      return String(first) === String(second)
+    }
+
+    return false
+  }
+
+  return Object.is(first, second)
+}
+
+function isSameToastContent(first: ToastT, second: ToastT) {
+  return (
+    isSameToastValue(first.title, second.title) &&
+    isSameToastValue(first.description, second.description) &&
+    isSameToastValue(first.jsx, second.jsx) &&
+    isSameToastValue(first.action, second.action) &&
+    isSameToastValue(first.cancel, second.cancel) &&
+    isSameToastValue(first.type, second.type)
+  )
 }
 
 function getDefaultSwipeDirections(position: string): Array<SwipeDirection> {
@@ -143,7 +179,6 @@ function canRenderNode(node: unknown): boolean {
 }
 
 function resolveToastEvent(
-  store: ToastCore,
   event: ToastEvent,
   setToasts: (updater: (currentToasts: ToastT[]) => ToastT[]) => void,
   mode: 'remove' | 'mark-delete',
@@ -198,7 +233,7 @@ export function useToaster(store: ToastCore = DEFAULT_TOAST_CORE): {
 
   onMount(() => {
     const unsubscribe = store.subscribe((event) => {
-      resolveToastEvent(store, event, setToasts, 'remove')
+      resolveToastEvent(event, setToasts, 'remove')
     })
 
     onCleanup(unsubscribe)
@@ -221,6 +256,7 @@ function ToastItem(props: ToastItemProps) {
   const [isSwiped, setIsSwiped] = createSignal(false)
   const [offsetBeforeRemove, setOffsetBeforeRemove] = createSignal(0)
   const [initialHeight, setInitialHeight] = createSignal(0)
+  const [isBumping, setIsBumping] = createSignal(false)
 
   let remainingTime = TOAST_LIFETIME
   let dragStartTime: Date | null = null
@@ -228,19 +264,22 @@ function ToastItem(props: ToastItemProps) {
   let lastCloseTimerStartTime = 0
   let pointerStart: { x: number; y: number } | null = null
   let timeoutId: number | undefined
+  let bumpTimeoutId: number | undefined
 
   const isFront = createMemo(() => props.index === 0)
   const isVisible = createMemo(() => props.index + 1 <= props.visibleToasts)
   const toastType = createMemo(() => props.toast.type)
   const dismissible = createMemo(() => props.toast.dismissible !== false)
   const toastClass = createMemo(() => props.toast.class || '')
-  const toastDescriptionClass = createMemo(() => props.toast.descriptionClass || '')
 
   const y = createMemo(() => props.position.split('-')[0] || 'bottom')
   const x = createMemo(() => props.position.split('-')[1] || 'right')
 
   const closeButton = createMemo(() => props.toast.closeButton ?? props.closeButton)
   const duration = createMemo(() => props.toast.duration || props.duration || TOAST_LIFETIME)
+  const bumpKey = createMemo(() =>
+    props.highlightedToastId === props.toast.id ? (props.highlightKey ?? 0) : 0,
+  )
 
   const toastsHeightBefore = createMemo(() => {
     let totalHeight = 0
@@ -342,6 +381,31 @@ function ToastItem(props: ToastItemProps) {
     })
   })
 
+  createEffect(() => {
+    const bumpToken = bumpKey()
+
+    if (!bumpToken || !toastRef) {
+      return
+    }
+
+    setIsBumping(false)
+
+    if (bumpTimeoutId) {
+      clearTimeout(bumpTimeoutId)
+    }
+
+    requestAnimationFrame(() => {
+      setIsBumping(true)
+      bumpTimeoutId = window.setTimeout(() => setIsBumping(false), 240)
+    })
+
+    onCleanup(() => {
+      if (bumpTimeoutId) {
+        clearTimeout(bumpTimeoutId)
+      }
+    })
+  })
+
   const deleteToast = () => {
     const toastToRemove = props.toast
     const toastId = toastToRemove.id
@@ -362,6 +426,7 @@ function ToastItem(props: ToastItemProps) {
   createEffect(() => {
     const toastValue = props.toast
     const onAutoClose = toastValue.onAutoClose
+    const bumpToken = bumpKey()
 
     const isPromiseLoading = toastValue.promise && toastType() === 'loading'
     const isInfinite = toastValue.duration === Number.POSITIVE_INFINITY
@@ -369,6 +434,11 @@ function ToastItem(props: ToastItemProps) {
 
     if (isPromiseLoading || isInfinite || isLoading) {
       return
+    }
+
+    if (bumpToken) {
+      remainingTime = duration()
+      lastCloseTimerStartTime = 0
     }
 
     const pauseTimer = () => {
@@ -591,6 +661,7 @@ function ToastItem(props: ToastItemProps) {
       data-index={props.index}
       data-front={isFront()}
       data-swiping={swiping()}
+      data-bump={isBumping()}
       data-dismissible={dismissible()}
       data-type={toastType()}
       data-invert={invert()}
@@ -658,12 +729,7 @@ function ToastItem(props: ToastItemProps) {
         <Show when={props.toast.description}>
           <div
             data-description
-            class={cn(
-              props.descriptionClass,
-              toastDescriptionClass(),
-              props.classes?.description,
-              props.toast.classes?.description,
-            )}
+            class={cn(props.classes?.description, props.toast.classes?.description)}
           >
             {resolveNode(props.toast.description)}
           </div>
@@ -733,11 +799,14 @@ function ToastRoot(props: ToasterProps): JSX.Element {
   const [heights, setHeightsState] = createSignal<HeightT[]>([])
   const [expanded, setExpanded] = createSignal(false)
   const [interacting, setInteracting] = createSignal(false)
+  const [highlightedToastId, setHighlightedToastId] = createSignal<ToastId | undefined>(undefined)
+  const [highlightKey, setHighlightKey] = createSignal(0)
 
   const [actualTheme, setActualTheme] = createSignal<'light' | 'dark'>('light')
   const hotkey = createMemo(() => props.hotkey || ['altKey', 'KeyT'])
   const dir = createMemo(() => props.dir || getDocumentDirection())
   const gap = createMemo(() => props.gap || GAP)
+  const preventDuplicate = createMemo(() => props.preventDuplicate ?? false)
 
   const hotkeyLabel = createMemo(() => hotkey().join('+').replace(/Key/g, '').replace(/Digit/g, ''))
 
@@ -775,7 +844,32 @@ function ToastRoot(props: ToasterProps): JSX.Element {
 
   onMount(() => {
     const unsubscribe = DEFAULT_TOAST_CORE.subscribe((event) => {
-      resolveToastEvent(DEFAULT_TOAST_CORE, event, setToasts, 'mark-delete')
+      if ((event as ToastToDismiss).dismiss) {
+        resolveToastEvent(event, setToasts, 'mark-delete')
+        return
+      }
+
+      const toastEvent = event as ToastT
+      const currentToasts = toasts()
+      const isExistingToast = currentToasts.some((toastItem) => toastItem.id === toastEvent.id)
+
+      if (preventDuplicate() && !isExistingToast && matchesToasterId(toastEvent, props.id)) {
+        const eventPosition = resolveToastPosition(toastEvent, props.position)
+        const lastToast = currentToasts.find(
+          (toastItem) =>
+            !toastItem.delete &&
+            matchesToasterId(toastItem, props.id) &&
+            resolveToastPosition(toastItem, props.position) === eventPosition,
+        )
+
+        if (lastToast && isSameToastContent(lastToast, toastEvent)) {
+          setHighlightedToastId(lastToast.id)
+          setHighlightKey((value) => value + 1)
+          return
+        }
+      }
+
+      resolveToastEvent(event, setToasts, 'mark-delete')
     })
 
     onCleanup(unsubscribe)
@@ -943,11 +1037,12 @@ function ToastRoot(props: ToasterProps): JSX.Element {
                     defaultRichColors={props.richColors ?? false}
                     duration={props.duration ?? TOAST_LIFETIME}
                     class={props.toastClass}
-                    descriptionClass={props.descriptionClass}
                     invert={props.invert ?? false}
                     visibleToasts={props.visibleToasts || VISIBLE_TOASTS_AMOUNT}
                     closeButton={props.closeButton ?? false}
                     interacting={interacting()}
+                    highlightKey={highlightKey()}
+                    highlightedToastId={highlightedToastId()}
                     position={positionValue as Position}
                     style={props.toastStyle}
                     unstyled={props.unstyled ?? false}
@@ -994,8 +1089,4 @@ export function Toaster(props: ToasterProps): JSX.Element {
   )
 }
 
-export function CompactToaster(props: ToasterProps): JSX.Element {
-  return <ToastRoot {...props} icons={props.icons} />
-}
-
-export { ToastRoot as BaseToaster }
+export { ToastRoot as CompactToaster }
