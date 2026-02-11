@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
 import type { Action } from '../src/types'
-
 import { isAction } from '../src/types'
 
 describe('types helpers', () => {

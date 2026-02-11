@@ -21,8 +21,6 @@ export const getAsset = (type?: ToastTypes): JSX.Element | null => {
   }
 }
 
-const bars = Array.from({ length: 12 }, () => 0)
-
 export function Loader(props: { visible: boolean; class?: string }) {
   return (
     <div
@@ -30,9 +28,18 @@ export function Loader(props: { visible: boolean; class?: string }) {
       data-visible={props.visible}
     >
       <div class="sonner-spinner">
-        {bars.map((_, index) => (
-          <div class="sonner-loading-bar" data-index={index + 1} />
-        ))}
+        <div class="sonner-loading-bar" data-index={1} />
+        <div class="sonner-loading-bar" data-index={2} />
+        <div class="sonner-loading-bar" data-index={3} />
+        <div class="sonner-loading-bar" data-index={4} />
+        <div class="sonner-loading-bar" data-index={5} />
+        <div class="sonner-loading-bar" data-index={6} />
+        <div class="sonner-loading-bar" data-index={7} />
+        <div class="sonner-loading-bar" data-index={8} />
+        <div class="sonner-loading-bar" data-index={9} />
+        <div class="sonner-loading-bar" data-index={10} />
+        <div class="sonner-loading-bar" data-index={11} />
+        <div class="sonner-loading-bar" data-index={12} />
       </div>
     </div>
   )
@@ -114,7 +121,7 @@ export const CloseIcon = () => (
     stroke-linecap="round"
     stroke-linejoin="round"
   >
-    <line x1="18" y1="6" x2="6" y2="18"></line>
-    <line x1="6" y1="6" x2="18" y2="18"></line>
+    <line x1="18" y1="6" x2="6" y2="18" />
+    <line x1="6" y1="6" x2="18" y2="18" />
   </svg>
 )

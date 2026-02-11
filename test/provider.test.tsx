@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it } from 'vitest'
 
 import { CompactToaster, Toaster } from '../src'
 import { toast } from '../src/state'
+
 import { resetToastState } from './helpers/toast-state'
 
 describe('Toaster default config variants', () => {

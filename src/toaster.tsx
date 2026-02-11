@@ -1,8 +1,10 @@
-import type { Accessor, Component, JSX } from 'solid-js'
-
 import defu from 'defu'
+import type { Accessor, Component, JSX } from 'solid-js'
 import { For, Show, createEffect, createMemo, createSignal, onCleanup, onMount } from 'solid-js'
 
+import { CloseIcon, getAsset, Loader } from './assets'
+import { useIsDocumentHidden } from './hooks'
+import { ToastCore } from './state'
 import type {
   HeightT,
   Position,
@@ -15,10 +17,6 @@ import type {
   ToasterProps,
   ToasterTargetConfig,
 } from './types'
-
-import { CloseIcon, getAsset, Loader } from './assets'
-import { useIsDocumentHidden } from './hooks'
-import { ToastCore } from './state'
 import { isAction } from './types'
 
 const VISIBLE_TOASTS_AMOUNT = 3

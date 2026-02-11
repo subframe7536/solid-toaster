@@ -1,11 +1,12 @@
+import '../src/styles/base.css'
+import '../src/styles/theme.css'
+
 import { For, createSignal } from 'solid-js'
 import { render } from 'solid-js/web'
 
 import type { Position, ToasterProps } from '../src'
-
 import { CompactToaster, Toaster } from '../src'
 import { toast } from '../src/state'
-import '../src/styles/styles.css'
 
 const positions: Position[] = [
   'top-left',

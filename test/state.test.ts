@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 
 import { ToastCore, toast } from '../src/state'
+
 import { resetToastState } from './helpers/toast-state'
 
 const waitForAnimationFrame = () => new Promise((resolve) => setTimeout(resolve, 0))

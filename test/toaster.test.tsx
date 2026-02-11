@@ -1,13 +1,14 @@
-import type { JSX } from 'solid-js'
+import '../src/styles.base.css'
+import '../src/theme-default.css'
 
 import { fireEvent, render, screen, waitFor } from '@solidjs/testing-library'
+import type { JSX } from 'solid-js'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { toast } from '../src/state'
 import { Toaster, useToaster } from '../src/toaster'
+
 import { resetToastState } from './helpers/toast-state'
-import '../src/styles.base.css'
-import '../src/theme-default.css'
 
 describe('Toaster', () => {
   beforeEach(() => {

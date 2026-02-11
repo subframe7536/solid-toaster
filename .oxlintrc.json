@@ -1,5 +1,4 @@
 {
-  "ignorePatterns": ["sonner"],
   "plugins": ["eslint", "import", "jsdoc", "jsx-a11y", "unicorn", "oxc", "typescript", "promise"],
   "categories": {
     "correctness": "error",
@@ -10,6 +9,31 @@
       "files": ["src/**/*.tsx", "playground/**/*.tsx"],
       "jsPlugins": ["eslint-plugin-solid"],
       "rules": {
+        "solid/event-handlers": [
+          "error",
+          {
+            // if true, don't warn on ambiguously named event handlers like `onclick` or `onchange`
+            "ignoreCase": false,
+            // if true, warn when spreading event handlers onto JSX. Enable for Solid < v1.6.
+            "warnOnSpread": false
+          }
+        ],
+        // these rules are mostly style suggestions
+        "solid/imports": "error",
+        // identifier usage is important
+        "solid/jsx-no-duplicate-props": "error",
+        "solid/jsx-no-script-url": "error",
+        "solid/no-destructure": "error",
+        // security problems
+        "solid/no-innerhtml": ["error", { "allowStatic": true }],
+        "solid/no-react-deps": "error",
+        "solid/no-react-specific-props": "error",
+        "solid/no-unknown-namespaces": "error",
+        "solid/prefer-for": "error",
+        "solid/prefer-show": "error",
+        "solid/self-closing-comp": "error",
+        "solid/style-prop": ["error", { "styleProps": ["style", "css"] }],
+        "solid/jsx-no-undef": ["error", { "typescriptEnabled": true }],
         "solid/reactivity": "warn"
       }
     }
@@ -112,9 +136,9 @@
     "unicorn/no-useless-promise-resolve-reject": "error",
     "unicorn/no-unnecessary-await": "error",
     "unicorn/no-useless-fallback-in-spread": "error",
-    "unicorn/prefer-dom-node-dataset": "error",
-    "unicorn/prefer-dom-node-append": "error",
-    "unicorn/prefer-dom-node-remove": "error",
+    // "unicorn/prefer-dom-node-dataset": "error",
+    // "unicorn/prefer-dom-node-append": "error",
+    // "unicorn/prefer-dom-node-remove": "error",
     "unicorn/prefer-date-now": "error",
     "unicorn/prefer-blob-reading-methods": "error",
     "unicorn/no-typeof-undefined": "error",
@@ -128,7 +152,7 @@
       }
     ],
     "import/consistent-type-specifier-style": "error",
-    "import/sort-imports": "error",
+    "import/sort-imports": "off",
     "import/no-duplicates": "error",
     "import/no-import-assign": "error",
     "import/no-self-import": "error",
