@@ -26,7 +26,7 @@ export const LoadingIcon = () => {
     const angle = index === 0 ? 0.0001 : index * 30
     return {
       animation: 'sonner-spin 1.2s linear infinite',
-      background: 'var(--gray11)',
+      background: 'hsl(0, 0%, 43.5%)',
       'border-radius': '6px',
       height: '8%',
       left: '-10%',

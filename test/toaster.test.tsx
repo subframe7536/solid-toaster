@@ -28,7 +28,7 @@ describe('Toaster', () => {
 
     expect(await screen.findByText('My Toast')).toBeInTheDocument()
 
-    const toastItem = document.querySelector('[data-sonner-toast]')
+    const toastItem = document.querySelector('.sonner-toast')
     expect(toastItem).not.toHaveAttribute('data-type')
   })
 
@@ -76,7 +76,7 @@ describe('Toaster', () => {
     await screen.findByText('Global toast')
     await screen.findByText('Secondary toast')
 
-    const lists = document.querySelectorAll('[data-sonner-toaster]')
+    const lists = document.querySelectorAll('.sonner-toaster')
 
     expect(lists).toHaveLength(2)
     expect(lists[0]?.textContent).toContain('Global toast')
@@ -102,7 +102,7 @@ describe('Toaster', () => {
     toast('Dark themed toast')
     await screen.findByText('Dark themed toast')
 
-    const toasterList = document.querySelector('[data-sonner-toaster]')
+    const toasterList = document.querySelector('.sonner-toaster')
     expect(toasterList).toHaveAttribute('data-sonner-theme', 'dark')
   })
 
@@ -121,7 +121,7 @@ describe('Toaster', () => {
     toast('Offset toast')
     await screen.findByText('Offset toast')
 
-    const list = document.querySelector('[data-sonner-toaster]')
+    const list = document.querySelector('.sonner-toaster')
     expect(list).toHaveAttribute(
       'style',
       expect.stringContaining(
@@ -144,7 +144,7 @@ describe('Toaster', () => {
     toast('RTL toast')
 
     await screen.findByText('RTL toast')
-    const list = document.querySelector('[data-sonner-toaster]')
+    const list = document.querySelector('.sonner-toaster')
     expect(list).toHaveAttribute('dir', 'rtl')
 
     document.documentElement.removeAttribute('dir')
@@ -177,7 +177,7 @@ describe('Toaster', () => {
 
     await screen.findByText('Auto dir toast')
 
-    const list = document.querySelector('[data-sonner-toaster]')
+    const list = document.querySelector('.sonner-toaster')
     expect(list).toHaveAttribute('dir', 'ltr')
 
     styleSpy.mockRestore()
@@ -208,7 +208,7 @@ describe('Toaster', () => {
     toast('System theme toast')
     await screen.findByText('System theme toast')
 
-    const list = document.querySelector('[data-sonner-toaster]')
+    const list = document.querySelector('.sonner-toaster')
     expect(list).toHaveAttribute('data-sonner-theme', 'dark')
     expect(matchMediaSpy).toHaveBeenCalledWith('(prefers-color-scheme: dark)')
     expect(addListener).toHaveBeenCalledTimes(1)
@@ -243,7 +243,7 @@ describe('Toaster', () => {
 
     await screen.findByText('Theme toggle toast')
 
-    const list = document.querySelector('[data-sonner-toaster]')
+    const list = document.querySelector('.sonner-toaster')
     expect(list).toHaveAttribute('data-sonner-theme', 'light')
 
     changeHandler?.({ matches: true } as MediaQueryListEvent)
@@ -296,8 +296,8 @@ describe('Toaster', () => {
 
     await screen.findByText('No icon')
 
-    const toastItem = document.querySelector('[data-sonner-toast]')
-    expect(toastItem?.querySelector('[data-icon]')).toBeNull()
+    const toastItem = document.querySelector('.sonner-toast')
+    expect(toastItem?.querySelector('.sonner-icon')).toBeNull()
   })
 
   it('renders text cancel/action nodes when not action objects', async () => {
@@ -311,7 +311,7 @@ describe('Toaster', () => {
 
     await screen.findByText('String buttons')
 
-    const toastItem = document.querySelector('[data-sonner-toast]')
+    const toastItem = document.querySelector('.sonner-toast')
     expect(toastItem?.textContent).toContain('Cancel node')
     expect(toastItem?.textContent).toContain('Action node')
   })
@@ -345,7 +345,7 @@ describe('Toaster', () => {
 
     await screen.findByText('Action text')
 
-    const actionButton = document.querySelector('[data-action]')
+    const actionButton = document.querySelector('.sonner-action')
     expect(actionButton).toBeNull()
     expect(screen.getByText('Non action value')).toBeInTheDocument()
   })
@@ -426,7 +426,7 @@ describe('Toaster', () => {
     })
 
     await screen.findByText('Hover pause')
-    const list = document.querySelector('[data-sonner-toaster]') as HTMLElement
+    const list = document.querySelector('.sonner-toaster') as HTMLElement
 
     fireEvent.mouseEnter(list)
     vi.advanceTimersByTime(400)
@@ -473,7 +473,7 @@ describe('Toaster', () => {
     })
 
     const toastItem = (await screen.findByText('Swipe toast')).closest(
-      '[data-sonner-toast]',
+      '.sonner-toast',
     ) as HTMLElement
     expect(toastItem).toBeInTheDocument()
 
@@ -511,9 +511,7 @@ describe('Toaster', () => {
       duration: Number.POSITIVE_INFINITY,
     })
 
-    const toastItem = (await screen.findByText('No swipe')).closest(
-      '[data-sonner-toast]',
-    ) as HTMLElement
+    const toastItem = (await screen.findByText('No swipe')).closest('.sonner-toast') as HTMLElement
     ;(toastItem as any).setPointerCapture = vi.fn()
 
     fireEvent.pointerDown(toastItem, {
@@ -538,7 +536,7 @@ describe('Toaster', () => {
 
     fireEvent.pointerUp(toastItem, { pointerId: 3 })
 
-    expect(toastItem).toHaveAttribute('data-swiping', 'false')
+    expect(toastItem).not.toHaveAttribute('data-swiping')
     expect(screen.getByText('No swipe')).toBeInTheDocument()
   })
 
@@ -554,7 +552,7 @@ describe('Toaster', () => {
     })
 
     const toastItem = (await screen.findByText('Selection toast')).closest(
-      '[data-sonner-toast]',
+      '.sonner-toast',
     ) as HTMLElement
     ;(toastItem as any).setPointerCapture = vi.fn()
 
@@ -610,7 +608,7 @@ describe('Toaster', () => {
     render(() => <Toaster />)
     toast('Scaled')
 
-    const toastItem = (await screen.findByText('Scaled')).closest('[data-sonner-toast]')
+    const toastItem = (await screen.findByText('Scaled')).closest('.sonner-toast')
     expect(toastItem).toHaveAttribute('style', expect.stringContaining('--initial-height: 50px'))
 
     rectSpy.mockRestore()
@@ -626,22 +624,22 @@ describe('Toaster', () => {
     await screen.findByText('Bottom toast')
     await screen.findByText('Top toast')
 
-    const lists = document.querySelectorAll<HTMLElement>('[data-sonner-toaster]')
+    const lists = document.querySelectorAll<HTMLElement>('.sonner-toaster')
     expect(lists).toHaveLength(2)
     expect(Array.from(lists).some((list) => list.dataset.yPosition === 'top')).toBe(true)
 
     fireEvent.keyDown(document, { altKey: true, code: 'KeyT' })
 
     await waitFor(() => {
-      const firstToast = document.querySelector('[data-sonner-toast]')
-      expect(firstToast).toHaveAttribute('data-expanded', 'true')
+      const firstToast = document.querySelector('.sonner-toast')
+      expect(firstToast).toHaveAttribute('data-expanded')
     })
 
     fireEvent.keyDown(document, { code: 'Escape' })
 
     await waitFor(() => {
-      const firstToast = document.querySelector('[data-sonner-toast]')
-      expect(firstToast).toHaveAttribute('data-expanded', 'false')
+      const firstToast = document.querySelector('.sonner-toast')
+      expect(firstToast).not.toHaveAttribute('data-expanded')
     })
   })
 
@@ -655,7 +653,7 @@ describe('Toaster', () => {
     })
 
     const toastItem = (await screen.findByText('Horizontal swipe')).closest(
-      '[data-sonner-toast]',
+      '.sonner-toast',
     ) as HTMLElement
     ;(toastItem as any).setPointerCapture = vi.fn()
 
@@ -693,7 +691,7 @@ describe('Toaster', () => {
     })
 
     const toastItem = (await screen.findByText('Focus toast')).closest(
-      '[data-sonner-toaster]',
+      '.sonner-toaster',
     ) as HTMLElement
     fireEvent.focus(toastItem, { relatedTarget: button })
 

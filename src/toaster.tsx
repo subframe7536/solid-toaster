@@ -638,6 +638,7 @@ function ToastItem(props: ToastItemProps) {
       }}
       tabIndex={0}
       class={cn(
+        'sonner-toast',
         props.class,
         toastClass(),
         props.classes?.toast,
@@ -654,26 +655,25 @@ function ToastItem(props: ToastItemProps) {
             ]
           : undefined,
       )}
-      data-sonner-toast
-      data-rich-colors={props.toast.richColors ?? props.defaultRichColors}
-      data-styled={styled()}
-      data-mounted={mounted()}
-      data-promise={Boolean(props.toast.promise)}
-      data-swiped={isSwiped()}
-      data-removed={removed()}
-      data-visible={isVisible()}
+      data-rich-colors={(props.toast.richColors ?? props.defaultRichColors) ? '' : undefined}
+      data-styled={styled() ? '' : undefined}
+      data-mounted={mounted() ? '' : undefined}
+      data-promise={props.toast.promise ? '' : undefined}
+      data-swiped={isSwiped() ? '' : undefined}
+      data-removed={removed() ? '' : undefined}
+      data-visible={isVisible() ? '' : undefined}
       data-y-position={y()}
       data-x-position={x()}
       data-index={props.index}
-      data-front={isFront()}
-      data-swiping={swiping()}
-      data-bump={isBumping()}
-      data-dismissible={dismissible()}
+      data-front={isFront() ? '' : undefined}
+      data-swiping={swiping() ? '' : undefined}
+      data-bump={isBumping() ? '' : undefined}
+      data-dismissible={dismissible() ? '' : undefined}
       data-type={toastType()}
-      data-invert={invert()}
-      data-swipe-out={swipeOut()}
+      data-invert={invert() ? '' : undefined}
+      data-swipe-out={swipeOut() ? '' : undefined}
       data-swipe-direction={swipeOutDirection()}
-      data-expanded={Boolean(props.expanded || (props.expandByDefault && mounted()))}
+      data-expanded={props.expanded || (props.expandByDefault && mounted()) ? '' : undefined}
       data-testid={props.toast.testId}
       style={{
         '--index': props.index,
@@ -696,9 +696,12 @@ function ToastItem(props: ToastItemProps) {
       <Show when={closeButton() && !props.toast.jsx && toastType() !== 'loading'}>
         <button
           aria-label={props.closeButtonAriaLabel}
-          data-disabled={disabled()}
-          data-close-button
-          class={cn(props.classes?.closeButton, props.toast.classes?.closeButton)}
+          data-disabled={disabled() ? '' : undefined}
+          class={cn(
+            'sonner-close-button',
+            props.classes?.closeButton,
+            props.toast.classes?.closeButton,
+          )}
           onClick={() => {
             if (disabled() || !dismissible()) {
               return
@@ -719,7 +722,9 @@ function ToastItem(props: ToastItemProps) {
           canRenderNode(icon())
         }
       >
-        <div data-icon class={cn('sonner-loader', props.classes?.icon, props.toast.classes?.icon)}>
+        <div
+          class={cn('sonner-icon', 'sonner-loader', props.classes?.icon, props.toast.classes?.icon)}
+        >
           <Show when={props.toast.promise || (props.toast.type === 'loading' && !props.toast.icon)}>
             {props.icons?.loading}
           </Show>
@@ -727,15 +732,18 @@ function ToastItem(props: ToastItemProps) {
         </div>
       </Show>
 
-      <div data-content class={cn(props.classes?.content, props.toast.classes?.content)}>
-        <div data-title class={cn(props.classes?.title, props.toast.classes?.title)}>
+      <div class={cn('sonner-content', props.classes?.content, props.toast.classes?.content)}>
+        <div class={cn('sonner-title', props.classes?.title, props.toast.classes?.title)}>
           {props.toast.jsx || resolveNode(props.toast.title)}
         </div>
 
         <Show when={props.toast.description}>
           <div
-            data-description
-            class={cn(props.classes?.description, props.toast.classes?.description)}
+            class={cn(
+              'sonner-description',
+              props.classes?.description,
+              props.toast.classes?.description,
+            )}
           >
             {resolveNode(props.toast.description)}
           </div>
@@ -748,10 +756,13 @@ function ToastItem(props: ToastItemProps) {
 
       <Show when={props.toast.cancel && isAction(props.toast.cancel)}>
         <button
-          data-button
-          data-cancel
+          class={cn(
+            'sonner-button',
+            'sonner-cancel',
+            props.classes?.cancelButton,
+            props.toast.classes?.cancelButton,
+          )}
           style={props.toast.cancelButtonStyle || props.cancelButtonStyle}
-          class={cn(props.classes?.cancelButton, props.toast.classes?.cancelButton)}
           onClick={(event) => {
             if (!isAction(props.toast.cancel) || !dismissible()) {
               return
@@ -771,10 +782,13 @@ function ToastItem(props: ToastItemProps) {
 
       <Show when={props.toast.action && isAction(props.toast.action)}>
         <button
-          data-button
-          data-action
+          class={cn(
+            'sonner-button',
+            'sonner-action',
+            props.classes?.actionButton,
+            props.toast.classes?.actionButton,
+          )}
           style={props.toast.actionButtonStyle || props.actionButtonStyle}
-          class={cn(props.classes?.actionButton, props.toast.classes?.actionButton)}
           onClick={(event) => {
             if (!isAction(props.toast.action)) {
               return
@@ -980,8 +994,7 @@ export function BaseToaster(props: ToasterProps): JSX.Element {
               }}
               dir={dir() === 'auto' ? getDocumentDirection() : dir()}
               tabIndex={-1}
-              class={props.class}
-              data-sonner-toaster
+              class={cn('sonner-toaster', props.class)}
               data-sonner-theme={actualTheme()}
               data-y-position={y}
               data-x-position={x}
@@ -1003,9 +1016,11 @@ export function BaseToaster(props: ToasterProps): JSX.Element {
                 }
               }}
               onFocus={(event) => {
+                const toastTarget =
+                  event.target instanceof Element ? event.target.closest('.sonner-toast') : null
                 const isNotDismissible =
-                  event.target instanceof HTMLElement &&
-                  event.target.dataset.dismissible === 'false'
+                  toastTarget instanceof HTMLElement &&
+                  !toastTarget.hasAttribute('data-dismissible')
 
                 if (isNotDismissible) {
                   return
@@ -1025,9 +1040,11 @@ export function BaseToaster(props: ToasterProps): JSX.Element {
               }}
               onDragEnd={() => setExpanded(false)}
               onPointerDown={(event) => {
+                const toastTarget =
+                  event.target instanceof Element ? event.target.closest('.sonner-toast') : null
                 const isNotDismissible =
-                  event.target instanceof HTMLElement &&
-                  event.target.dataset.dismissible === 'false'
+                  toastTarget instanceof HTMLElement &&
+                  !toastTarget.hasAttribute('data-dismissible')
 
                 if (!isNotDismissible) {
                   setInteracting(true)
