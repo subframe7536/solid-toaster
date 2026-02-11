@@ -1,7 +1,7 @@
 {
   "name": "solid-toaster",
   "version": "0.0.0",
-  "description": "A sonner-like toast component for solid.js",
+  "description": "An advanced sonner-like toast component for solid.js",
   "homepage": "https://github.com/subframe7536/solid-toaster#readme",
   "bugs": {
     "url": "https://github.com/subframe7536/solid-toaster/issues"
@@ -19,15 +19,12 @@
   "sideEffects": [
     "**/*.css"
   ],
-  "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "solid": "./dist/index.jsx",
-      "default": "./dist/index.js"
-    },
-    "./styles.css": "./dist/styles.css",
+    ".": "./dist/index.js",
+    "./compact": "./dist/compact.js",
+    "./package.json": "./package.json",
+    "./style.css": "./dist/styles.css",
     "./base.css": "./dist/base.css",
     "./theme.css": "./dist/theme.css"
   },

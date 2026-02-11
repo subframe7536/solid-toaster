@@ -1,18 +1,5 @@
-export {
-  custom,
-  dismiss,
-  error,
-  info,
-  loading,
-  message,
-  promise,
-  success,
-  warning,
-  toast,
-  getToasts,
-  getHistory,
-} from './state'
-export { CompactToaster, Toaster, useToaster } from './toaster'
+export { toast } from './state'
+export { Toaster, useToaster, BaseToaster } from './toaster'
 export type {
   Action,
   ExternalToast,

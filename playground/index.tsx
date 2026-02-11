@@ -7,8 +7,7 @@ import { For, createSignal } from 'solid-js'
 import { render } from 'solid-js/web'
 
 import type { Position, ToasterProps } from '../src'
-import { CompactToaster, Toaster } from '../src'
-import { toast } from '../src/state'
+import { Toaster, toast, BaseToaster } from '../src'
 
 const positions: Position[] = [
   'top-left',
@@ -297,7 +296,7 @@ function App() {
         mobileOffset={16}
       />
 
-      <CompactToaster
+      <BaseToaster
         id="compact"
         theme={theme()}
         icons={{ loading: <div class="i-lucide:loader-2 animate-spin" /> }}

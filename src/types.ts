@@ -77,33 +77,121 @@ export interface ToastIcons {
 }
 
 export interface ToasterProps {
+  /** Match toasts against a specific toaster instance. */
   id?: string
+  /**
+   * Invert toast colors to improve contrast.
+   * @default false
+   */
   invert?: boolean
+  /**
+   * Visual theme for the toaster.
+   * @default 'light'
+   */
   theme?: 'light' | 'dark' | 'system'
+  /**
+   * Default position for toasts without a per-toast position override.
+   * @default 'bottom-right'
+   */
   position?: Position
+  /**
+   * Keyboard shortcut that expands the toaster list.
+   * @default ['altKey', 'KeyT']
+   */
   hotkey?: string[]
+  /**
+   * Expand the toaster list by default.
+   * @default false
+   */
   expand?: boolean
+  /**
+   * Default toast lifetime in milliseconds.
+   * @default 4000
+   */
   duration?: number
+  /**
+   * Spacing between stacked toasts, in pixels.
+   * @default 14
+   */
   gap?: number
+  /**
+   * Max number of visible toasts per position.
+   * @default 3
+   */
   visibleToasts?: number
+  /**
+   * Prevent duplicate toasts with matching content and position.
+   * @default false
+   */
   preventDuplicate?: boolean
+  /** Class name for the toaster root element. */
   class?: string
+  /** Inline styles for the toaster root element. */
   style?: JSX.CSSProperties
+  /** Class name applied to each toast. */
   toastClass?: string
+  /** Inline styles applied to each toast. */
   toastStyle?: JSX.CSSProperties
+  /** Inline styles applied to cancel action buttons. */
   cancelButtonStyle?: JSX.CSSProperties
+  /** Inline styles applied to primary action buttons. */
   actionButtonStyle?: JSX.CSSProperties
+  /**
+   * Render toasts without default styles.
+   * @default false
+   */
   unstyled?: boolean
+  /** Class overrides for individual toast slots. */
   classes?: ToastClasses
+  /**
+   * Desktop viewport offsets for the toaster container.
+   * @default '24px'
+   */
   offset?: Offset
+  /**
+   * Mobile viewport offsets for the toaster container.
+   * @default '16px'
+   */
   mobileOffset?: Offset
+  /**
+   * Direction for layout and swipe behavior.
+   * @default 'ltr'
+   */
   dir?: 'rtl' | 'ltr' | 'auto'
+  /**
+   * Override default swipe directions.
+   * @default position-derived directions
+   */
   swipeDirections?: SwipeDirection[]
+  /**
+   * Custom aria-label for the toaster list.
+   * @default `Notifications {hotkey}`
+   */
   customAriaLabel?: string
+  /**
+   * Base label used to build the list aria-label.
+   * @default 'Notifications'
+   */
   containerAriaLabel?: string
+  /**
+   * Replace the default icons for toast types.
+   * @default built-in icon set
+   */
   icons?: ToastIcons
+  /**
+   * Use high-contrast colors for status toasts.
+   * @default false
+   */
   richColors?: boolean
+  /**
+   * Show a close button on toasts.
+   * @default false
+   */
   closeButton?: boolean
+  /**
+   * Accessible label for the close button.
+   * @default 'Close toast'
+   */
   closeButtonAriaLabel?: string
 }
 
@@ -150,8 +238,51 @@ export interface ToastToDismiss {
 export type ToastEvent = ToastT | ToastToDismiss
 
 export type ExternalToast = Omit<ToastT, 'id' | 'type' | 'title' | 'jsx' | 'delete' | 'promise'> & {
+  /**
+   * Optional id to update an existing toast.
+   * @default auto-generated
+   */
   id?: ToastId
+  /**
+   * Route the toast to a specific toaster instance.
+   * @default undefined
+   */
   toasterId?: string
+  /**
+   * Override the default position for this toast.
+   * @default ToasterProps.position
+   */
+  position?: Position
+  /**
+   * Override the default duration for this toast.
+   * @default ToasterProps.duration (4000)
+   */
+  duration?: number
+  /**
+   * Enable or disable the close button for this toast.
+   * @default ToasterProps.closeButton (false)
+   */
+  closeButton?: boolean
+  /**
+   * Mark the toast as dismissible by user interaction.
+   * @default true
+   */
+  dismissible?: boolean
+  /**
+   * Render with richer status colors.
+   * @default ToasterProps.richColors (false)
+   */
+  richColors?: boolean
+  /**
+   * Render the toast without default styles.
+   * @default ToasterProps.unstyled (false)
+   */
+  unstyled?: boolean
+  /**
+   * Invert toast colors for contrast.
+   * @default ToasterProps.invert (false)
+   */
+  invert?: boolean
 }
 
 export interface HeightT {

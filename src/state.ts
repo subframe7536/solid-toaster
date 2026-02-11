@@ -176,30 +176,71 @@ function isPromiseExtendedResult(value: unknown): value is PromiseIExtendedResul
   return typeof value === 'object' && value !== null && 'message' in value
 }
 
+/**
+ * Create a default toast.
+ * @example
+ * message('Saved!')
+ * message('Saved!', { description: 'Changes synced.' })
+ */
 const message = (message: ToastTitle, data?: ExternalToast): ToastId => {
   return DEFAULT_TOAST_CORE.create({ ...data, message })
 }
 
+/**
+ * Create an error toast.
+ * @example
+ * toast.error('Something went wrong')
+ */
 const error = (message: ToastTitle, data?: ExternalToast): ToastId => {
   return DEFAULT_TOAST_CORE.create({ ...data, message, type: 'error' })
 }
 
+/**
+ * Create a success toast.
+ * @example
+ * toast.success('Profile updated')
+ */
 const success = (message: ToastTitle, data?: ExternalToast): ToastId => {
   return DEFAULT_TOAST_CORE.create({ ...data, message, type: 'success' })
 }
 
+/**
+ * Create an info toast.
+ * @example
+ * toast.info('New version available')
+ */
 const info = (message: ToastTitle, data?: ExternalToast): ToastId => {
   return DEFAULT_TOAST_CORE.create({ ...data, message, type: 'info' })
 }
 
+/**
+ * Create a warning toast.
+ * @example
+ * toast.warning('Storage almost full')
+ */
 const warning = (message: ToastTitle, data?: ExternalToast): ToastId => {
   return DEFAULT_TOAST_CORE.create({ ...data, message, type: 'warning' })
 }
 
+/**
+ * Create a loading toast.
+ * @example
+ * toast.loading('Uploading files...')
+ */
 const loading = (message: ToastTitle, data?: ExternalToast): ToastId => {
   return DEFAULT_TOAST_CORE.create({ ...data, message, type: 'loading' })
 }
 
+/**
+ * Render a custom toast with arbitrary JSX.
+ * @example
+ * toast.custom((id) => (
+ *   <div>
+ *     Custom toast {id}
+ *     <button onClick={() => toast.dismiss(id)}>Close</button>
+ *   </div>
+ * ))
+ */
 const custom = (jsx: (id: ToastId) => JSX.Element, data?: ExternalToast): ToastId => {
   const id = data?.id || DEFAULT_TOAST_CORE.createId()
   DEFAULT_TOAST_CORE.create({ jsx: jsx(id), ...data, id })
@@ -210,6 +251,15 @@ const dismiss: (id?: ToastId | undefined) => ToastId | undefined = DEFAULT_TOAST
 const getHistory: (id?: ToastId | undefined) => ToastT[] = DEFAULT_TOAST_CORE.getHistory
 const getToasts: (id?: ToastId | undefined) => ToastT[] = DEFAULT_TOAST_CORE.getActiveToasts
 
+/**
+ * Bind a toast lifecycle to a promise.
+ * @example
+ * toast.promise(fetch('/api/user').then((res) => res.json()), {
+ *   loading: 'Fetching user...',
+ *   success: (data) => `Loaded ${data.name}`,
+ *   error: (error) => `Failed: ${error.message}`,
+ * })
+ */
 const promise = <ToastData>(
   promiseValue: PromiseT<ToastData>,
   data?: PromiseData<ToastData>,
@@ -371,6 +421,13 @@ type Toast = typeof message & {
   getToasts: typeof getToasts
 }
 
+/**
+ * Toast API with variants and helpers.
+ * @example
+ * toast('Hello Solid!')
+ * toast.success('Done')
+ * toast.dismiss()
+ */
 const toast = Object.assign(message, {
   success,
   info,

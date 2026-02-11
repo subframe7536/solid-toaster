@@ -226,6 +226,12 @@ function resolveToastEvent(
   })
 }
 
+/**
+ * Subscribe to the toast store and access the current toasts.
+ * @example
+ * const { toasts } = useToaster()
+ * createEffect(() => console.log(toasts()))
+ */
 export function useToaster(store: ToastCore = DEFAULT_TOAST_CORE): {
   toasts: Accessor<ToastT[]>
 } {
@@ -790,7 +796,12 @@ function ToastItem(props: ToastItemProps) {
   )
 }
 
-function ToastRoot(props: ToasterProps): JSX.Element {
+/**
+ * Core toaster renderer (without icons).
+ * @example
+ * <CompactToaster position="bottom-left" />
+ */
+export function BaseToaster(props: ToasterProps): JSX.Element {
   let listRef: HTMLOListElement | null = null
   let lastFocusedElement: HTMLElement | null = null
   let isFocusWithin = false
@@ -842,44 +853,40 @@ function ToastRoot(props: ToasterProps): JSX.Element {
     })
   }
 
-  onMount(() => {
-    const unsubscribe = DEFAULT_TOAST_CORE.subscribe((event) => {
-      if ((event as ToastToDismiss).dismiss) {
-        resolveToastEvent(event, setToasts, 'mark-delete')
+  function toastListener(event: ToastEvent): void {
+    if ((event as ToastToDismiss).dismiss) {
+      resolveToastEvent(event, setToasts, 'mark-delete')
+      return
+    }
+
+    const toastEvent = event as ToastT
+    const currentToasts = toasts()
+    const isExistingToast = currentToasts.some((toastItem) => toastItem.id === toastEvent.id)
+
+    if (preventDuplicate() && !isExistingToast && matchesToasterId(toastEvent, props.id)) {
+      const eventPosition = resolveToastPosition(toastEvent, props.position)
+      const lastToast = currentToasts.find(
+        (toastItem) =>
+          !toastItem.delete &&
+          matchesToasterId(toastItem, props.id) &&
+          resolveToastPosition(toastItem, props.position) === eventPosition,
+      )
+
+      if (lastToast && isSameToastContent(lastToast, toastEvent)) {
+        setHighlightedToastId(lastToast.id)
+        setHighlightKey((value) => value + 1)
         return
       }
+    }
 
-      const toastEvent = event as ToastT
-      const currentToasts = toasts()
-      const isExistingToast = currentToasts.some((toastItem) => toastItem.id === toastEvent.id)
+    resolveToastEvent(event, setToasts, 'mark-delete')
+  }
 
-      if (preventDuplicate() && !isExistingToast && matchesToasterId(toastEvent, props.id)) {
-        const eventPosition = resolveToastPosition(toastEvent, props.position)
-        const lastToast = currentToasts.find(
-          (toastItem) =>
-            !toastItem.delete &&
-            matchesToasterId(toastItem, props.id) &&
-            resolveToastPosition(toastItem, props.position) === eventPosition,
-        )
-
-        if (lastToast && isSameToastContent(lastToast, toastEvent)) {
-          setHighlightedToastId(lastToast.id)
-          setHighlightKey((value) => value + 1)
-          return
-        }
-      }
-
-      resolveToastEvent(event, setToasts, 'mark-delete')
-    })
-
-    onCleanup(unsubscribe)
-  })
+  onMount(() => onCleanup(DEFAULT_TOAST_CORE.subscribe(toastListener)))
 
   createEffect(() => {
-    const theme = props.theme
-
-    if (theme !== 'system') {
-      setActualTheme((theme || 'light') as 'light' | 'dark')
+    if (props.theme !== 'system') {
+      setActualTheme((props.theme || 'light') as 'light' | 'dark')
       return
     }
 
@@ -1073,9 +1080,14 @@ function ToastRoot(props: ToasterProps): JSX.Element {
   )
 }
 
+/**
+ * Full toaster component with default icons.
+ * @example
+ * <Toaster position="top-right" richColors />
+ */
 export function Toaster(props: ToasterProps): JSX.Element {
   return (
-    <ToastRoot
+    <BaseToaster
       {...props}
       icons={{
         success: props.icons?.success ?? <SuccessIcon />,
@@ -1088,5 +1100,3 @@ export function Toaster(props: ToasterProps): JSX.Element {
     />
   )
 }
-
-export { ToastRoot as CompactToaster }
