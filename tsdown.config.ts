@@ -8,7 +8,6 @@ export default defineConfig([
     entry,
     platform: 'browser',
     plugins: [solid()],
-    external: ['defu'],
     copy: ['./src/styles/styles.css', './src/styles/base.css', './src/styles/theme.css'],
     exports: {
       customExports(exports) {
@@ -23,7 +22,6 @@ export default defineConfig([
   {
     entry,
     platform: 'neutral',
-    external: ['defu'],
     outExtensions: () => ({ js: '.jsx' }),
     dts: false,
   },

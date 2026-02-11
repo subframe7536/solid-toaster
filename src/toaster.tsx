@@ -3,8 +3,8 @@ import { For, Show, createEffect, createMemo, createSignal, onCleanup, onMount }
 
 import { CloseIcon, ErrorIcon, InfoIcon, LoadingIcon, SuccessIcon, WarningIcon } from './assets'
 import { useIsDocumentHidden } from './hooks'
-import type { ToastCore } from './state'
-import { DEFAULT_TOAST_CORE } from './state'
+import type { ToastState } from './state'
+import { TOAST_STATE } from './state'
 import type {
   HeightT,
   Position,
@@ -232,7 +232,7 @@ function resolveToastEvent(
  * const { toasts } = useToaster()
  * createEffect(() => console.log(toasts()))
  */
-export function useToaster(store: ToastCore = DEFAULT_TOAST_CORE): {
+export function useToaster(store: ToastState = TOAST_STATE): {
   toasts: Accessor<ToastT[]>
 } {
   const [toasts, setToasts] = createSignal<ToastT[]>([])
@@ -860,7 +860,7 @@ export function BaseToaster(props: ToasterProps): JSX.Element {
       const toastItem = currentToasts.find((toastValue) => toastValue.id === toastToRemove.id)
 
       if (!toastItem?.delete) {
-        DEFAULT_TOAST_CORE.dismiss(toastToRemove.id)
+        TOAST_STATE.dismiss(toastToRemove.id)
       }
 
       return currentToasts.filter((toastValue) => toastValue.id !== toastToRemove.id)
@@ -896,7 +896,7 @@ export function BaseToaster(props: ToasterProps): JSX.Element {
     resolveToastEvent(event, setToasts, 'mark-delete')
   }
 
-  onMount(() => onCleanup(DEFAULT_TOAST_CORE.subscribe(toastListener)))
+  onMount(() => onCleanup(TOAST_STATE.subscribe(toastListener)))
 
   createEffect(() => {
     if (props.theme !== 'system') {

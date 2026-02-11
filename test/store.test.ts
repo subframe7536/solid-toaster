@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest'
 
-import { createToastCore } from '../src/state'
+import { createToastState } from '../src/state'
 
 describe('toast store', () => {
   it('generates sequential ids for new toasts', () => {
-    const store = createToastCore()
+    const store = createToastState()
 
     const first = store.create({ message: 'A' })
     const second = store.create({ message: 'B' })
@@ -15,7 +15,7 @@ describe('toast store', () => {
   })
 
   it('keeps publish and active toasts in sync', () => {
-    const store = createToastCore()
+    const store = createToastState()
     const events: string[] = []
 
     const unsubscribe = store.subscribe((event) => {

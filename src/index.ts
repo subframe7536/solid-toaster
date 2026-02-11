@@ -1,4 +1,4 @@
-export { toast } from './state'
+export { toast, TOAST_STATE } from './state'
 export { Toaster, useToaster, BaseToaster } from './toaster'
 export type {
   Action,

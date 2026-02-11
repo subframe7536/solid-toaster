@@ -13,7 +13,7 @@ import type {
   PromiseData,
 } from './types'
 
-export interface ToastCore {
+export interface ToastState {
   subscribers: Array<(toast: ToastEvent) => void>
   toasts: ToastT[]
   dismissedToasts: Set<ToastId>
@@ -45,7 +45,7 @@ function scheduleAnimationFrame(callback: () => void) {
   setTimeout(callback, 0)
 }
 
-export function createToastCore(): ToastCore {
+export function createToastState(): ToastState {
   let toastsCounter = 1
 
   const subscribers: Array<(toast: ToastEvent) => void> = []
@@ -67,7 +67,7 @@ export function createToastCore(): ToastCore {
     toasts = [...toasts, data]
   }
 
-  const create: ToastCore['create'] = (
+  const create: ToastState['create'] = (
     data: ExternalToast & {
       message?: ToastTitle
       type?: ToastTypes
@@ -108,7 +108,7 @@ export function createToastCore(): ToastCore {
     return id
   }
 
-  const dismiss: ToastCore['dismiss'] = (id?: ToastId): ToastId | undefined => {
+  const dismiss: ToastState['dismiss'] = (id?: ToastId): ToastId | undefined => {
     if (id !== undefined) {
       dismissedToasts.add(id)
       scheduleAnimationFrame(() => {
@@ -159,7 +159,7 @@ export function createToastCore(): ToastCore {
   }
 }
 
-export const DEFAULT_TOAST_CORE: ToastCore = createToastCore()
+export const TOAST_STATE: ToastState = createToastState()
 
 function isHttpResponse(data: unknown): data is Response {
   return (
@@ -183,7 +183,7 @@ function isPromiseExtendedResult(value: unknown): value is PromiseIExtendedResul
  * message('Saved!', { description: 'Changes synced.' })
  */
 const message = (message: ToastTitle, data?: ExternalToast): ToastId => {
-  return DEFAULT_TOAST_CORE.create({ ...data, message })
+  return TOAST_STATE.create({ ...data, message })
 }
 
 /**
@@ -192,7 +192,7 @@ const message = (message: ToastTitle, data?: ExternalToast): ToastId => {
  * toast.error('Something went wrong')
  */
 const error = (message: ToastTitle, data?: ExternalToast): ToastId => {
-  return DEFAULT_TOAST_CORE.create({ ...data, message, type: 'error' })
+  return TOAST_STATE.create({ ...data, message, type: 'error' })
 }
 
 /**
@@ -201,7 +201,7 @@ const error = (message: ToastTitle, data?: ExternalToast): ToastId => {
  * toast.success('Profile updated')
  */
 const success = (message: ToastTitle, data?: ExternalToast): ToastId => {
-  return DEFAULT_TOAST_CORE.create({ ...data, message, type: 'success' })
+  return TOAST_STATE.create({ ...data, message, type: 'success' })
 }
 
 /**
@@ -210,7 +210,7 @@ const success = (message: ToastTitle, data?: ExternalToast): ToastId => {
  * toast.info('New version available')
  */
 const info = (message: ToastTitle, data?: ExternalToast): ToastId => {
-  return DEFAULT_TOAST_CORE.create({ ...data, message, type: 'info' })
+  return TOAST_STATE.create({ ...data, message, type: 'info' })
 }
 
 /**
@@ -219,7 +219,7 @@ const info = (message: ToastTitle, data?: ExternalToast): ToastId => {
  * toast.warning('Storage almost full')
  */
 const warning = (message: ToastTitle, data?: ExternalToast): ToastId => {
-  return DEFAULT_TOAST_CORE.create({ ...data, message, type: 'warning' })
+  return TOAST_STATE.create({ ...data, message, type: 'warning' })
 }
 
 /**
@@ -228,7 +228,7 @@ const warning = (message: ToastTitle, data?: ExternalToast): ToastId => {
  * toast.loading('Uploading files...')
  */
 const loading = (message: ToastTitle, data?: ExternalToast): ToastId => {
-  return DEFAULT_TOAST_CORE.create({ ...data, message, type: 'loading' })
+  return TOAST_STATE.create({ ...data, message, type: 'loading' })
 }
 
 /**
@@ -242,14 +242,14 @@ const loading = (message: ToastTitle, data?: ExternalToast): ToastId => {
  * ))
  */
 const custom = (jsx: (id: ToastId) => JSX.Element, data?: ExternalToast): ToastId => {
-  const id = data?.id || DEFAULT_TOAST_CORE.createId()
-  DEFAULT_TOAST_CORE.create({ jsx: jsx(id), ...data, id })
+  const id = data?.id || TOAST_STATE.createId()
+  TOAST_STATE.create({ jsx: jsx(id), ...data, id })
   return id
 }
 
-const dismiss: (id?: ToastId | undefined) => ToastId | undefined = DEFAULT_TOAST_CORE.dismiss
-const getHistory: (id?: ToastId | undefined) => ToastT[] = DEFAULT_TOAST_CORE.getHistory
-const getToasts: (id?: ToastId | undefined) => ToastT[] = DEFAULT_TOAST_CORE.getActiveToasts
+const dismiss: (id?: ToastId | undefined) => ToastId | undefined = TOAST_STATE.dismiss
+const getHistory: (id?: ToastId | undefined) => ToastT[] = TOAST_STATE.getHistory
+const getToasts: (id?: ToastId | undefined) => ToastT[] = TOAST_STATE.getActiveToasts
 
 /**
  * Bind a toast lifecycle to a promise.
@@ -271,7 +271,7 @@ const promise = <ToastData>(
   let id: ToastId | undefined
 
   if (data.loading !== undefined) {
-    id = DEFAULT_TOAST_CORE.create({
+    id = TOAST_STATE.create({
       ...data,
       promise: promiseValue,
       type: 'loading',
@@ -293,7 +293,7 @@ const promise = <ToastData>(
 
       if (isPromiseExtendedResult(response)) {
         shouldDismiss = false
-        DEFAULT_TOAST_CORE.create({ id, type: 'default', ...response })
+        TOAST_STATE.create({ id, type: 'default', ...response })
         return
       }
 
@@ -314,7 +314,7 @@ const promise = <ToastData>(
           ? promiseData
           : { message: promiseData }
 
-        DEFAULT_TOAST_CORE.create({ id, type: 'error', description, ...toastSettings })
+        TOAST_STATE.create({ id, type: 'error', description, ...toastSettings })
         return
       }
 
@@ -333,7 +333,7 @@ const promise = <ToastData>(
           ? promiseData
           : { message: promiseData }
 
-        DEFAULT_TOAST_CORE.create({ id, type: 'error', description, ...toastSettings })
+        TOAST_STATE.create({ id, type: 'error', description, ...toastSettings })
         return
       }
 
@@ -352,7 +352,7 @@ const promise = <ToastData>(
           ? promiseData
           : { message: promiseData }
 
-        DEFAULT_TOAST_CORE.create({ id, type: 'success', description, ...toastSettings })
+        TOAST_STATE.create({ id, type: 'success', description, ...toastSettings })
       }
     })
     .catch(async (errorValue) => {
@@ -373,12 +373,12 @@ const promise = <ToastData>(
           ? promiseData
           : { message: promiseData }
 
-        DEFAULT_TOAST_CORE.create({ id, type: 'error', description, ...toastSettings })
+        TOAST_STATE.create({ id, type: 'error', description, ...toastSettings })
       }
     })
     .finally(() => {
       if (shouldDismiss) {
-        DEFAULT_TOAST_CORE.dismiss(id)
+        TOAST_STATE.dismiss(id)
         id = undefined
       }
 
