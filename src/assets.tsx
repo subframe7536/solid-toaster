@@ -1,4 +1,5 @@
 import type { JSX } from 'solid-js'
+import { For } from 'solid-js'
 
 import type { ToastTypes } from './types'
 
@@ -16,32 +17,63 @@ export const getAsset = (type?: ToastTypes): JSX.Element | null => {
     case 'error':
       return <ErrorIcon />
 
+    case 'loading':
+      return <Loader visible />
+
     default:
       return null
   }
 }
 
 export function Loader(props: { visible: boolean; class?: string }) {
+  const LOADER_SIZE = 16
+  const bars = Array.from({ length: 12 }, (_, i) => i + 1)
+
+  const wrapperStyle: JSX.CSSProperties = {
+    height: `${LOADER_SIZE}px`,
+    width: `${LOADER_SIZE}px`,
+    position: 'absolute',
+    inset: 0,
+    'z-index': 10,
+  }
+
+  const spinnerStyle: JSX.CSSProperties = {
+    position: 'relative',
+    top: '50%',
+    left: '50%',
+    height: `${LOADER_SIZE}px`,
+    width: `${LOADER_SIZE}px`,
+  }
+
+  const barBaseStyle: JSX.CSSProperties = {
+    animation: 'sonner-spin 1.2s linear infinite',
+    background: 'var(--gray11)',
+    'border-radius': '6px',
+    height: '8%',
+    left: '-10%',
+    position: 'absolute',
+    top: '-3.9%',
+    width: '24%',
+  }
+  const getBarStyle = (index: number): JSX.CSSProperties => {
+    const delay = -1.2 + index * 0.1
+    const angle = index === 0 ? 0.0001 : index * 30
+    return {
+      ...barBaseStyle,
+      'animation-delay': `${delay}s`,
+      transform: `rotate(${angle}deg) translate(146%)`,
+    }
+  }
+
   return (
-    <div
-      class={['sonner-loading-wrapper', props.class].filter(Boolean).join(' ')}
-      data-visible={props.visible}
-    >
-      <div class="sonner-spinner">
-        <div class="sonner-loading-bar" data-index={1} />
-        <div class="sonner-loading-bar" data-index={2} />
-        <div class="sonner-loading-bar" data-index={3} />
-        <div class="sonner-loading-bar" data-index={4} />
-        <div class="sonner-loading-bar" data-index={5} />
-        <div class="sonner-loading-bar" data-index={6} />
-        <div class="sonner-loading-bar" data-index={7} />
-        <div class="sonner-loading-bar" data-index={8} />
-        <div class="sonner-loading-bar" data-index={9} />
-        <div class="sonner-loading-bar" data-index={10} />
-        <div class="sonner-loading-bar" data-index={11} />
-        <div class="sonner-loading-bar" data-index={12} />
+    <>
+      <style>{`@keyframes sonner-fade-out{0%{opacity:1;transform:scale(1)}to{opacity:0;transform:scale(.8)}}@keyframes sonner-spin{0%{opacity:1}to{opacity:.15}}@media (prefers-reduced-motion){*{animation:none!important}}`}</style>
+      <div class={props.class} data-visible={props.visible} style={wrapperStyle}>
+        <div style={spinnerStyle}>
+          <For each={bars}>{(index) => <div data-index={index} style={getBarStyle(index)} />}</For>
+        </div>
       </div>
-    </div>
+    </>
   )
 }
 
