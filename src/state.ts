@@ -13,23 +13,11 @@ import type {
   PromiseData,
 } from './types'
 
-export interface ToastState {
-  subscribers: Array<(toast: ToastEvent) => void>
-  toasts: ToastT[]
-  dismissedToasts: Set<ToastId>
-  createId: () => ToastId
-  subscribe: (subscriber: (toast: ToastEvent) => void) => VoidFunction
-  create: (
-    data: ExternalToast & {
-      message?: ToastTitle
-      type?: ToastTypes
-      promise?: PromiseT
-      jsx?: JSX.Element
-    },
-  ) => ToastId
-  dismiss: (id?: ToastId) => ToastId | undefined
-  getActiveToasts: () => ToastT[]
-  getHistory: () => ToastT[]
+type CreateToastData = ExternalToast & {
+  message?: ToastTitle
+  type?: ToastTypes
+  promise?: PromiseT
+  jsx?: JSX.Element
 }
 
 function hasValidToastId(id: ToastId | undefined): id is ToastId {
@@ -45,47 +33,45 @@ function scheduleAnimationFrame(callback: () => void) {
   setTimeout(callback, 0)
 }
 
-export function createToastState(): ToastState {
-  let toastsCounter = 1
+export class ToastState {
+  subscribers: Array<(toast: ToastEvent) => void> = []
+  toasts: ToastT[] = []
+  dismissedToasts: Set<ToastId> = new Set<ToastId>()
+  private toastsCounter: number = 1
 
-  const subscribers: Array<(toast: ToastEvent) => void> = []
-  let toasts: ToastT[] = []
-  const dismissedToasts = new Set<ToastId>()
+  private publish(data: ToastT): void {
+    this.subscribers.forEach((subscriber) => subscriber(data))
+  }
 
-  const createId = (): ToastId => {
-    const id = toastsCounter
-    toastsCounter += 1
+  public createId(): ToastId {
+    const id = this.toastsCounter
+    this.toastsCounter += 1
     return id
   }
 
-  const publish = (data: ToastT): void => {
-    subscribers.forEach((subscriber) => subscriber(data))
+  public subscribe(subscriber: (toast: ToastEvent) => void): VoidFunction {
+    this.subscribers.push(subscriber)
+
+    return () => {
+      const index = this.subscribers.indexOf(subscriber)
+      if (index !== -1) {
+        this.subscribers.splice(index, 1)
+      }
+    }
   }
 
-  const addToast = (data: ToastT): void => {
-    publish(data)
-    toasts = [...toasts, data]
-  }
-
-  const create: ToastState['create'] = (
-    data: ExternalToast & {
-      message?: ToastTitle
-      type?: ToastTypes
-      promise?: PromiseT
-      jsx?: JSX.Element
-    },
-  ): ToastId => {
+  public create(data: CreateToastData): ToastId {
     const { message, ...rest } = data
-    const id = hasValidToastId(data.id) ? data.id : createId()
-    const alreadyExists = toasts.find((toast) => toast.id === id)
+    const id = hasValidToastId(data.id) ? data.id : this.createId()
+    const alreadyExists = this.toasts.find((toast) => toast.id === id)
     const dismissible = data.dismissible === undefined ? true : data.dismissible
 
-    if (dismissedToasts.has(id)) {
-      dismissedToasts.delete(id)
+    if (this.dismissedToasts.has(id)) {
+      this.dismissedToasts.delete(id)
     }
 
     if (alreadyExists) {
-      toasts = toasts.map((toast) => {
+      this.toasts = this.toasts.map((toast) => {
         if (toast.id === id) {
           const nextToast = {
             ...toast,
@@ -95,71 +81,46 @@ export function createToastState(): ToastState {
             title: message,
           }
 
-          publish(nextToast)
+          this.publish(nextToast)
           return nextToast
         }
 
         return toast
       })
     } else {
-      addToast({ title: message, ...rest, dismissible, id })
+      const data = { title: message, ...rest, dismissible, id }
+      this.publish(data)
+      this.toasts = [...this.toasts, data]
     }
 
     return id
   }
 
-  const dismiss: ToastState['dismiss'] = (id?: ToastId): ToastId | undefined => {
+  public dismiss(id?: ToastId): ToastId | undefined {
     if (id !== undefined) {
-      dismissedToasts.add(id)
+      this.dismissedToasts.add(id)
       scheduleAnimationFrame(() => {
-        subscribers.forEach((subscriber) => subscriber({ id, dismiss: true }))
+        this.subscribers.forEach((subscriber) => subscriber({ id, dismiss: true }))
       })
     } else {
-      toasts.forEach((toast) => {
-        subscribers.forEach((subscriber) => subscriber({ id: toast.id, dismiss: true }))
+      this.toasts.forEach((toast) => {
+        this.subscribers.forEach((subscriber) => subscriber({ id: toast.id, dismiss: true }))
       })
     }
 
     return id
   }
 
-  return {
-    get subscribers() {
-      return subscribers
-    },
-    set subscribers(next) {
-      subscribers.splice(0, subscribers.length, ...next)
-    },
-    get toasts() {
-      return toasts
-    },
-    set toasts(next) {
-      toasts = next
-    },
-    dismissedToasts,
-    createId,
-    subscribe(subscriber) {
-      subscribers.push(subscriber)
+  public getActiveToasts(): ToastT[] {
+    return this.toasts.filter((toast) => !this.dismissedToasts.has(toast.id))
+  }
 
-      return () => {
-        const index = subscribers.indexOf(subscriber)
-        if (index !== -1) {
-          subscribers.splice(index, 1)
-        }
-      }
-    },
-    create,
-    dismiss,
-    getActiveToasts() {
-      return toasts.filter((toast) => !dismissedToasts.has(toast.id))
-    },
-    getHistory() {
-      return toasts
-    },
+  public getHistory(): ToastT[] {
+    return this.toasts
   }
 }
 
-export const TOAST_STATE: ToastState = createToastState()
+export const TOAST_STATE: ToastState = new ToastState()
 
 function isHttpResponse(data: unknown): data is Response {
   return (
@@ -247,9 +208,9 @@ const custom = (jsx: (id: ToastId) => JSX.Element, data?: ExternalToast): ToastI
   return id
 }
 
-const dismiss: (id?: ToastId | undefined) => ToastId | undefined = TOAST_STATE.dismiss
-const getHistory: (id?: ToastId | undefined) => ToastT[] = TOAST_STATE.getHistory
-const getToasts: (id?: ToastId | undefined) => ToastT[] = TOAST_STATE.getActiveToasts
+const dismiss = (id?: ToastId): ToastId | undefined => TOAST_STATE.dismiss(id)
+const getHistory = (): ToastT[] => TOAST_STATE.getHistory()
+const getToasts = (): ToastT[] => TOAST_STATE.getActiveToasts()
 
 /**
  * Bind a toast lifecycle to a promise.
