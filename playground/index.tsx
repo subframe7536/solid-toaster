@@ -70,26 +70,26 @@ function App() {
     })
   }
 
-  function firePositionedToasts() {
-    toast('Top-left toast', { position: 'top-left' })
-    toast('Top-left toast 2', { position: 'top-left' })
-    toast.success('Bottom-center toast', { position: 'bottom-center' })
-    toast.error('Top-center toast', { position: 'top-center' })
-  }
+  // function firePositionedToasts() {
+  //   toast('Top-left toast', { position: 'top-left' })
+  //   toast('Top-left toast 2', { position: 'top-left' })
+  //   toast.success('Bottom-center toast', { position: 'bottom-center' })
+  //   toast.error('Top-center toast', { position: 'top-center' })
+  // }
 
-  function fireCompactToast() {
-    toast.loading('Compact toaster with custom styling', {
-      toasterId: 'compact',
+  function fireBaseToast() {
+    toast.loading('Base toaster with custom styling', {
+      toasterId: 'base',
       style: { background: '#ecfdf5', color: '#065f46', border: '1px solid #10b981' },
     })
   }
 
   return (
-    <main class="min-h-screen bg-slate-50 p-12 px-6 font-sans">
-      <h1 class="m-0 text-3xl font-bold">solid-toaster playground</h1>
-      <p class="mt-2 mb-6 text-slate-500">Sonner parity playground — hotkey: Alt+T</p>
+    <main class="min-h-screen bg-slate-50 px-6 pt-64 font-sans">
+      <h1 class="m-0 text-3xl font-bold text-center">solid-toaster playground</h1>
+      <p class="mt-2 mb-6 text-slate-500 text-center">Sonner parity playground — hotkey: Alt+T</p>
 
-      <section class="grid gap-4 p-4 max-w-4xl border border-slate-200 bg-white rounded-xl">
+      <section class="grid gap-4 p-4 mx-auto mt-12 max-w-6xl border border-slate-200 bg-white rounded-xl">
         <div class="flex flex-wrap items-center gap-3">
           <label class="grid gap-1.5 text-sm">
             Theme
@@ -249,13 +249,13 @@ function App() {
           >
             Custom
           </button>
-          <button
+          {/* <button
             type="button"
             class="px-3 py-1.5 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded hover:bg-slate-50 transition-colors"
             onClick={firePositionedToasts}
           >
             Dynamic positions
-          </button>
+          </button> */}
           <button
             type="button"
             class="px-3 py-1.5 text-sm font-medium text-slate-700 bg-white border border-slate-300 rounded hover:bg-slate-50 transition-colors"
@@ -269,9 +269,9 @@ function App() {
           <button
             type="button"
             class="px-3 py-1.5 text-sm font-medium text-white bg-emerald-600 border border-emerald-600 rounded hover:bg-emerald-700 transition-colors"
-            onClick={fireCompactToast}
+            onClick={fireBaseToast}
           >
-            Compact
+            base
           </button>
         </div>
       </section>
@@ -297,7 +297,7 @@ function App() {
       />
 
       <BaseToaster
-        id="compact"
+        id="base"
         theme={theme()}
         icons={{ loading: <div class="i-lucide:loader-2 animate-spin" /> }}
         position="bottom-left"
