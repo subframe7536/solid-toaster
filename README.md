@@ -11,6 +11,9 @@ An advanced sonner-like toast component for solid.js
 - Exported CSS themes (base, theme, styles) for quick setup
 - Option to prevent duplicated toast
 
+>[!note]
+>This package is ESM-only
+
 ## Install
 
 ```bash
