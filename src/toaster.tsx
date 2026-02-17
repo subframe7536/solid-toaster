@@ -57,12 +57,13 @@ function isSameToastValue(first: unknown, second: unknown) {
 
 function isSameToastContent(first: ToastT, second: ToastT) {
   return (
-    isSameToastValue(first.title, second.title) &&
-    isSameToastValue(first.description, second.description) &&
-    isSameToastValue(first.jsx, second.jsx) &&
-    isSameToastValue(first.action, second.action) &&
-    isSameToastValue(first.cancel, second.cancel) &&
-    isSameToastValue(first.type, second.type)
+    isSameToastValue(first.id, second.id) ||
+    isSameToastValue(first.jsx, second.jsx) ||
+    (isSameToastValue(first.title, second.title) &&
+      isSameToastValue(first.description, second.description) &&
+      isSameToastValue(first.action, second.action) &&
+      isSameToastValue(first.cancel, second.cancel) &&
+      isSameToastValue(first.type, second.type))
   )
 }
 
