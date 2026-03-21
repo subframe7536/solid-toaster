@@ -56,14 +56,23 @@ function isSameToastValue(first: unknown, second: unknown) {
 }
 
 function isSameToastContent(first: ToastT, second: ToastT) {
+  if (isSameToastValue(first.id, second.id)) {
+    return true
+  }
+
+  const hasFirstJsx = canRenderNode(first.jsx)
+  const hasSecondJsx = canRenderNode(second.jsx)
+
+  if (hasFirstJsx || hasSecondJsx) {
+    return hasFirstJsx && hasSecondJsx && isSameToastValue(first.jsx, second.jsx)
+  }
+
   return (
-    isSameToastValue(first.id, second.id) ||
-    isSameToastValue(first.jsx, second.jsx) ||
-    (isSameToastValue(first.title, second.title) &&
-      isSameToastValue(first.description, second.description) &&
-      isSameToastValue(first.action, second.action) &&
-      isSameToastValue(first.cancel, second.cancel) &&
-      isSameToastValue(first.type, second.type))
+    isSameToastValue(first.title, second.title) &&
+    isSameToastValue(first.description, second.description) &&
+    isSameToastValue(first.action, second.action) &&
+    isSameToastValue(first.cancel, second.cancel) &&
+    isSameToastValue(first.type, second.type)
   )
 }
 
