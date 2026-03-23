@@ -1,5 +1,14 @@
 import type { Accessor, Component, JSX } from 'solid-js'
-import { For, Show, createEffect, createMemo, createSignal, onCleanup, onMount } from 'solid-js'
+import {
+  For,
+  Show,
+  createEffect,
+  createMemo,
+  createSignal,
+  onCleanup,
+  onMount,
+  untrack,
+} from 'solid-js'
 
 import { CloseIcon, ErrorIcon, InfoIcon, LoadingIcon, SuccessIcon, WarningIcon } from './assets'
 import { useIsDocumentHidden } from './hooks'
@@ -228,7 +237,8 @@ function resolveToastEvent(
         return {
           ...toastItem,
           ...(event as ToastT),
-        }
+          mounted: true,
+        } satisfies ToastT
       })
     }
 
@@ -265,7 +275,7 @@ function ToastItem(props: ToastItemProps) {
   const [swipeOutDirection, setSwipeOutDirection] = createSignal<
     'left' | 'right' | 'up' | 'down' | null
   >(null)
-  const [mounted, setMounted] = createSignal(false)
+  const [mounted, setMounted] = createSignal(untrack(() => props.toast.mounted))
   const [removed, setRemoved] = createSignal(false)
   const [swiping, setSwiping] = createSignal(false)
   const [swipeOut, setSwipeOut] = createSignal(false)

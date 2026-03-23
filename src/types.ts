@@ -228,6 +228,7 @@ export interface ToastT {
   classes?: ToastClasses
   position?: Position
   testId?: string
+  mounted?: boolean
 }
 
 export interface ToastToDismiss {
