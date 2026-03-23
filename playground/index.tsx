@@ -84,6 +84,11 @@ function App() {
     })
   }
 
+  function fireLoadingToast() {
+    const id = toast.loading('Loading toast')
+    setTimeout(() => toast.dismiss(id), 3000)
+  }
+
   return (
     <main class="min-h-screen bg-slate-50 px-6 pt-64 font-sans">
       <h1 class="m-0 text-3xl font-bold text-center">solid-toaster playground</h1>
@@ -205,7 +210,7 @@ function App() {
           <button
             type="button"
             class="px-3 py-1.5 text-sm font-medium text-white bg-slate-600 border border-slate-600 rounded hover:bg-slate-700 transition-colors"
-            onClick={() => toast.loading('Loading toast')}
+            onClick={fireLoadingToast}
           >
             Loading
           </button>
