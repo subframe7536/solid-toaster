@@ -28,17 +28,34 @@ function App() {
   const [closeButton, setCloseButton] = createSignal(false)
   const [preventDuplicate, setPreventDuplicate] = createSignal(false)
 
-  function firePromiseToast() {
-    toast.promise(
-      new Promise<{ name: string }>((resolve) => {
-        setTimeout(() => resolve({ name: 'Solid toaster' }), 1200)
-      }),
-      {
-        loading: 'Fetching data... ',
-        success: (value) => `Loaded ${value.name}`,
-        error: (error) => `Failed: ${(error as Error).message}`,
-      },
-    )
+  // function firePromiseToast() {
+  //   toast.promise(
+  //     new Promise<{ name: string }>((resolve) => {
+  //       setTimeout(() => resolve({ name: 'Solid toaster' }), 1200)
+  //     }),
+  //     {
+  //       loading: 'Fetching data... ',
+  //       success: (value) => `Loaded ${value.name}`,
+  //       error: (error) => `Failed: ${(error as Error).message}`,
+  //     },
+  //   )
+  // }
+  const [promiseRuns, setPromiseRuns] = createSignal(0)
+  const wait = (ms: number) =>
+    new Promise<void>((resolve) => {
+      setTimeout(resolve, ms)
+    })
+  const firePromiseToast = () => {
+    const nextRun = promiseRuns() + 1
+    setPromiseRuns(nextRun)
+    const request = wait(1400).then(() => ({ run: nextRun }))
+
+    toast.promise(request, {
+      loading: `Sync #${nextRun} in progress...`,
+      success: (result) => `Sync #${result.run} finished`,
+      error: (error) => `Sync failed: ${String(error)}`,
+      duration: 1e6,
+    })
   }
 
   function fireActionToast() {

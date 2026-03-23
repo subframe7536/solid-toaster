@@ -286,6 +286,38 @@ describe('Toaster', () => {
     expect(loader).toBeInTheDocument()
   })
 
+  it('removes loading icon after promise toast resolves', async () => {
+    let resolvePromise: ((value: string) => void) | undefined
+    const pendingPromise = new Promise<string>((resolve) => {
+      resolvePromise = resolve
+    })
+
+    render(() => (
+      <Toaster
+        icons={{
+          loading: <span data-testid="promise-loading-icon">L</span>,
+          success: <span data-testid="promise-success-icon">S</span>,
+        }}
+      />
+    ))
+
+    toast.promise(pendingPromise, {
+      loading: 'Loading async toast',
+      success: (value) => `Resolved: ${value}`,
+    })
+
+    expect(await screen.findByText('Loading async toast')).toBeInTheDocument()
+    expect(screen.getByTestId('promise-loading-icon')).toBeInTheDocument()
+
+    resolvePromise?.('done')
+
+    expect(await screen.findByText('Resolved: done')).toBeInTheDocument()
+    await waitFor(() => {
+      expect(screen.queryByTestId('promise-loading-icon')).not.toBeInTheDocument()
+    })
+    expect(screen.getByTestId('promise-success-icon')).toBeInTheDocument()
+  })
+
   it('skips icon section when icon is explicitly null', async () => {
     render(() => <Toaster />)
 

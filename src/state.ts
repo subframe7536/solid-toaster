@@ -254,7 +254,7 @@ const promise = <ToastData>(
 
       if (isPromiseExtendedResult(response)) {
         shouldDismiss = false
-        TOAST_STATE.create({ id, type: 'default', ...response })
+        TOAST_STATE.create({ id, promise: undefined, type: 'default', ...response })
         return
       }
 
@@ -275,7 +275,7 @@ const promise = <ToastData>(
           ? promiseData
           : { message: promiseData }
 
-        TOAST_STATE.create({ id, type: 'error', description, ...toastSettings })
+        TOAST_STATE.create({ id, promise: undefined, type: 'error', description, ...toastSettings })
         return
       }
 
@@ -294,7 +294,7 @@ const promise = <ToastData>(
           ? promiseData
           : { message: promiseData }
 
-        TOAST_STATE.create({ id, type: 'error', description, ...toastSettings })
+        TOAST_STATE.create({ id, promise: undefined, type: 'error', description, ...toastSettings })
         return
       }
 
@@ -313,7 +313,13 @@ const promise = <ToastData>(
           ? promiseData
           : { message: promiseData }
 
-        TOAST_STATE.create({ id, type: 'success', description, ...toastSettings })
+        TOAST_STATE.create({
+          id,
+          promise: undefined,
+          type: 'success',
+          description,
+          ...toastSettings,
+        })
       }
     })
     .catch(async (errorValue) => {
@@ -334,7 +340,7 @@ const promise = <ToastData>(
           ? promiseData
           : { message: promiseData }
 
-        TOAST_STATE.create({ id, type: 'error', description, ...toastSettings })
+        TOAST_STATE.create({ id, promise: undefined, type: 'error', description, ...toastSettings })
       }
     })
     .finally(() => {
