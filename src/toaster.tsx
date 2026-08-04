@@ -1015,10 +1015,6 @@ export function BaseToaster(props: ToasterProps): JSX.Element {
               return toastItem.position === positionValue
             })
           })
-          const frontToastHeight = createMemo(() => {
-            const frontToast = positionedToasts()[0]
-            return heights().find((height) => height.toastId === frontToast?.id)?.height ?? 0
-          })
 
           return (
             <ol
@@ -1032,7 +1028,7 @@ export function BaseToaster(props: ToasterProps): JSX.Element {
               data-y-position={y}
               data-x-position={x}
               style={{
-                '--front-toast-height': `${frontToastHeight()}px`,
+                '--front-toast-height': `${heights()[0]?.height || 0}px`,
                 '--width': `${TOAST_WIDTH}px`,
                 '--gap': `${gap()}px`,
                 ...props.style,

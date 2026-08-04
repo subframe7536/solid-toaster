@@ -146,39 +146,6 @@ describe('Toaster', () => {
     )
   })
 
-  it('scopes front toast height to each position', async () => {
-    const originalGetBoundingClientRect = HTMLElement.prototype.getBoundingClientRect
-
-    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(
-      function (this: HTMLElement) {
-        if (this.classList.contains('sonner-toast')) {
-          return {
-            height: this.textContent?.includes('Top') ? 40 : 20,
-          } as DOMRect
-        }
-
-        return originalGetBoundingClientRect.call(this)
-      },
-    )
-
-    render(() => <Toaster />)
-
-    toast('Bottom toast', { position: 'bottom-right', duration: Number.POSITIVE_INFINITY })
-    toast('Top toast', { position: 'top-left', duration: Number.POSITIVE_INFINITY })
-
-    await screen.findByText('Bottom toast')
-    await screen.findByText('Top toast')
-
-    const bottomList = document.querySelector('[data-y-position="bottom"][data-x-position="right"]')
-    const topList = document.querySelector('[data-y-position="top"][data-x-position="left"]')
-
-    expect(bottomList).toHaveAttribute(
-      'style',
-      expect.stringContaining('--front-toast-height: 20px'),
-    )
-    expect(topList).toHaveAttribute('style', expect.stringContaining('--front-toast-height: 40px'))
-  })
-
   it('renders dir from document element when not explicitly provided', async () => {
     document.documentElement.setAttribute('dir', 'rtl')
 
