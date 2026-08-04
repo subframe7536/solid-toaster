@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 
-import { TOAST_STATE, toast } from '../src/state'
+import { TOAST_STATE, ToastState, toast } from '../src/state'
 
 import { resetToastState } from './helpers/toast-state'
 
@@ -109,8 +109,17 @@ describe('toast state', () => {
     expect(events.filter((event) => event.dismiss)).toHaveLength(2)
     expect(events.some((event) => event.id === 'one' && event.dismiss)).toBe(true)
     expect(events.some((event) => event.id === 'two' && event.dismiss)).toBe(true)
+    expect(toast.getToasts()).toHaveLength(0)
 
     unsubscribe()
+  })
+
+  it('skips numeric ids already used by explicit toasts', () => {
+    const state = new ToastState()
+
+    expect(state.create({ message: 'Explicit', id: 1 })).toBe(1)
+    expect(state.create({ message: 'Automatic' })).toBe(2)
+    expect(state.getHistory()).toHaveLength(2)
   })
 
   it('clears dismissed ids when recreated with message helper', () => {

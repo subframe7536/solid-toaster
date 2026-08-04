@@ -44,8 +44,13 @@ export class ToastState {
   }
 
   public createId(): ToastId {
-    const id = this.toastsCounter
-    this.toastsCounter += 1
+    let id = this.toastsCounter
+
+    while (this.toasts.some((toast) => toast.id === id)) {
+      id += 1
+    }
+
+    this.toastsCounter = id + 1
     return id
   }
 
@@ -104,6 +109,7 @@ export class ToastState {
       })
     } else {
       this.toasts.forEach((toast) => {
+        this.dismissedToasts.add(toast.id)
         this.subscribers.forEach((subscriber) => subscriber({ id: toast.id, dismiss: true }))
       })
     }
