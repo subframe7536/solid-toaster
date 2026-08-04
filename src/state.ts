@@ -242,7 +242,7 @@ const promise = <ToastData>(
   }
 
   const promiseResult = Promise.resolve(
-    promiseValue instanceof Function ? promiseValue() : promiseValue,
+    typeof promiseValue === 'function' ? promiseValue() : promiseValue,
   )
 
   let shouldDismiss = id !== undefined

@@ -1,22 +1,3 @@
 {
-  "compilerOptions": {
-    "target": "ESNext",
-    "jsx": "preserve",
-    "jsxImportSource": "solid-js",
-    "module": "ESNext",
-    "moduleResolution": "bundler",
-    "paths": {
-      "~/*": ["./src/*"]
-    },
-    "types": ["node", "vite/client"],
-    "allowJs": true,
-    "strict": true,
-    "strictNullChecks": true,
-    "noEmit": true,
-    "allowSyntheticDefaultImports": true,
-    "esModuleInterop": true,
-    "isolatedModules": true,
-    "skipLibCheck": true
-  },
-  "include": ["src", "playground", "test"]
+  "extends": "@subf/config/tsconfig-web"
 }

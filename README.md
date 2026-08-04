@@ -167,12 +167,7 @@ interface ToasterProps {
   invert?: boolean
   theme?: 'light' | 'dark' | 'system'
   position?:
-    | 'top-left'
-    | 'top-right'
-    | 'bottom-left'
-    | 'bottom-right'
-    | 'top-center'
-    | 'bottom-center'
+    'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' | 'top-center' | 'bottom-center'
   hotkey?: string[]
   expand?: boolean
   duration?: number
