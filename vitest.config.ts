@@ -8,7 +8,7 @@ export default defineConfig({
   plugins: [uno({ inspector: false }), solid({ hot: false })],
   resolve: {
     alias: {
-      '~': path.resolve(__dirname, './src'),
+      '~': path.resolve(import.meta.dirname, './src'),
     },
   },
   test: {

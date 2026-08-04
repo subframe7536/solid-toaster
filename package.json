@@ -21,10 +21,19 @@
   ],
   "types": "./dist/index.d.ts",
   "exports": {
-    ".": "./dist/index.js",
-    "./compact": "./dist/compact.js",
+    ".": {
+      "solid": "./dist/index.jsx",
+      "default": "./dist/index.js",
+      "type": "./dist/index.d.ts"
+    },
+    "./compact": {
+      "solid": "./dist/compact.jsx",
+      "default": "./dist/compact.js",
+      "type": "./dist/compact.d.ts"
+    },
     "./package.json": "./package.json",
     "./style.css": "./dist/styles.css",
+    "./styles.css": "./dist/styles.css",
     "./base.css": "./dist/base.css",
     "./theme.css": "./dist/theme.css"
   },
