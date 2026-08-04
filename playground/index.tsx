@@ -1,4 +1,4 @@
-import '@unocss/reset/tailwind.css'
+import '@subf/unocss/reset-tailwind.css'
 import 'uno.css'
 import '../src/styles/base.css'
 import '../src/styles/theme.css'
