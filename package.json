@@ -43,6 +43,7 @@
   },
   "scripts": {
     "build": "tsdown",
+    "build:playground": "vite build playground",
     "dev": "tsdown --watch",
     "play": "vite serve playground",
     "test": "vitest",

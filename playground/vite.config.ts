@@ -9,11 +9,12 @@ const isGithubActions = process.env.GITHUB_ACTIONS === 'true'
 const base = isGithubActions && repositoryName ? `/${repositoryName}/` : '/'
 
 export default defineConfig({
+  root: 'playground',
   base,
   plugins: [uno({ inspector: false }), solid()],
   resolve: {
     alias: {
-      '~': path.resolve('../src'),
+      '~': path.resolve('src'),
     },
   },
   build: {
