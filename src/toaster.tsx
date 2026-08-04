@@ -262,6 +262,7 @@ export function useToaster(store: ToastState = TOAST_STATE): {
       resolveToastEvent(event, setToasts, 'remove')
     })
 
+    queueMicrotask(() => setToasts(store.getActiveToasts()))
     onCleanup(unsubscribe)
   })
 
@@ -715,6 +716,7 @@ function ToastItem(props: ToastItemProps) {
     >
       <Show when={closeButton() && !props.toast.jsx && toastType() !== 'loading'}>
         <button
+          type="button"
           aria-label={props.closeButtonAriaLabel}
           data-disabled={disabled() ? '' : undefined}
           class={cn(
@@ -776,6 +778,7 @@ function ToastItem(props: ToastItemProps) {
 
       <Show when={props.toast.cancel && isAction(props.toast.cancel)}>
         <button
+          type="button"
           class={cn(
             'sonner-button',
             'sonner-cancel',
@@ -802,6 +805,7 @@ function ToastItem(props: ToastItemProps) {
 
       <Show when={props.toast.action && isAction(props.toast.action)}>
         <button
+          type="button"
           class={cn(
             'sonner-button',
             'sonner-action',
@@ -916,7 +920,12 @@ export function BaseToaster(props: ToasterProps): JSX.Element {
     resolveToastEvent(event, setToasts, 'mark-delete')
   }
 
-  onMount(() => onCleanup(TOAST_STATE.subscribe(toastListener)))
+  onMount(() => {
+    const unsubscribe = TOAST_STATE.subscribe(toastListener)
+
+    queueMicrotask(() => setToasts(TOAST_STATE.getActiveToasts()))
+    onCleanup(unsubscribe)
+  })
 
   createEffect(() => {
     if (props.theme !== 'system') {
@@ -1006,6 +1015,10 @@ export function BaseToaster(props: ToasterProps): JSX.Element {
               return toastItem.position === positionValue
             })
           })
+          const frontToastHeight = createMemo(() => {
+            const frontToast = positionedToasts()[0]
+            return heights().find((height) => height.toastId === frontToast?.id)?.height ?? 0
+          })
 
           return (
             <ol
@@ -1019,7 +1032,7 @@ export function BaseToaster(props: ToasterProps): JSX.Element {
               data-y-position={y}
               data-x-position={x}
               style={{
-                '--front-toast-height': `${heights()[0]?.height || 0}px`,
+                '--front-toast-height': `${frontToastHeight()}px`,
                 '--width': `${TOAST_WIDTH}px`,
                 '--gap': `${gap()}px`,
                 ...props.style,
