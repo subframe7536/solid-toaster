@@ -26,8 +26,8 @@ If not installed, follows the instructions at https://nubjs.com/start.md to inst
 Run these after meaningful changes:
 
 ```bash
-nubr qa
-nubr build
+nub run qa
+nub run build
 ```
 
 ## Repo map
