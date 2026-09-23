@@ -511,43 +511,12 @@ function ToastItem(props: ToastItemProps) {
     }
   })
 
-  const toastIcon = () => props.toast.icon
   const configuredTypeIcon = () => props.icons?.[toastType() as keyof ToastIcons]
-  const configuredLoadingIcon = () => props.icons?.loading
-  const configuredCloseIcon = () => props.icons?.close
 
-  const shouldRenderIcon = () => {
-    if (!toastType() && !toastIcon() && !props.toast.promise) {
-      return false
-    }
-
-    if (toastIcon() === null) {
-      return false
-    }
-
-    return Boolean(toastIcon()) || canRenderNode(configuredTypeIcon())
-  }
-
-  const renderTypeIcon = () => {
-    const customToastIcon = toastIcon()
-
-    if (customToastIcon) {
-      return customToastIcon
-    }
-
-    const Icon = configuredTypeIcon()
-    return Icon ? <Dynamic component={Icon} /> : null
-  }
-
-  const renderLoadingIcon = () => {
-    const Icon = configuredLoadingIcon()
-    return Icon ? <Dynamic component={Icon} /> : null
-  }
-
-  const renderCloseIcon = () => {
-    const Icon = configuredCloseIcon()
-    return Icon ? <Dynamic component={Icon} /> : null
-  }
+  const shouldRenderIcon = () =>
+    Boolean(toastType() || props.toast.icon || props.toast.promise) &&
+    props.toast.icon !== null &&
+    (Boolean(props.toast.icon) || canRenderNode(configuredTypeIcon()))
 
   const styled = createMemo(() => !props.toast.jsx && !props.toast.unstyled && !props.unstyled)
 
@@ -765,7 +734,7 @@ function ToastItem(props: ToastItemProps) {
             props.toast.onDismiss?.(props.toast)
           }}
         >
-          {renderCloseIcon()}
+          <Show when={props.icons?.close}>{(Icon) => <Dynamic component={Icon()} />}</Show>
         </button>
       </Show>
 
@@ -773,10 +742,24 @@ function ToastItem(props: ToastItemProps) {
         <div
           class={cn('sonner-icon', 'sonner-loader', props.classes?.icon, props.toast.classes?.icon)}
         >
-          <Show when={props.toast.promise || (props.toast.type === 'loading' && !props.toast.icon)}>
-            {renderLoadingIcon()}
+          <Show
+            when={
+              (props.toast.promise || (props.toast.type === 'loading' && !props.toast.icon)) &&
+              props.icons?.loading
+            }
+          >
+            {(Icon) => <Dynamic component={Icon()} />}
           </Show>
-          <Show when={props.toast.type !== 'loading'}>{renderTypeIcon()}</Show>
+          <Show when={props.toast.type !== 'loading'}>
+            <Show
+              when={props.toast.icon}
+              fallback={
+                <Show when={configuredTypeIcon()}>{(Icon) => <Dynamic component={Icon()} />}</Show>
+              }
+            >
+              {props.toast.icon}
+            </Show>
+          </Show>
         </div>
       </Show>
 
