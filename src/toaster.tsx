@@ -9,6 +9,7 @@ import {
   onMount,
   untrack,
 } from 'solid-js'
+import { Dynamic } from 'solid-js/web'
 
 import { CloseIcon, ErrorIcon, InfoIcon, LoadingIcon, SuccessIcon, WarningIcon } from './assets'
 import { useIsDocumentHidden } from './hooks'
@@ -21,6 +22,7 @@ import type {
   ToastEvent,
   ToastItemProps,
   ToastId,
+  ToastIcons,
   ToastT,
   ToastToDismiss,
   ToasterProps,
@@ -509,13 +511,12 @@ function ToastItem(props: ToastItemProps) {
     }
   })
 
-  const icon = createMemo(() => {
-    return props.toast.icon || props.icons?.[toastType() as keyof typeof props.icons]
-  })
+  const configuredTypeIcon = () => props.icons?.[toastType() as keyof ToastIcons]
 
-  const closeIcon = createMemo(() => {
-    return props.icons?.close
-  })
+  const shouldRenderIcon = () =>
+    Boolean(toastType() || props.toast.icon || props.toast.promise) &&
+    props.toast.icon !== null &&
+    (Boolean(props.toast.icon) || canRenderNode(configuredTypeIcon()))
 
   const styled = createMemo(() => !props.toast.jsx && !props.toast.unstyled && !props.unstyled)
 
@@ -733,24 +734,32 @@ function ToastItem(props: ToastItemProps) {
             props.toast.onDismiss?.(props.toast)
           }}
         >
-          <Show when={canRenderNode(closeIcon())}>{closeIcon()}</Show>
+          <Show when={props.icons?.close}>{(Icon) => <Dynamic component={Icon()} />}</Show>
         </button>
       </Show>
 
-      <Show
-        when={
-          (toastType() || props.toast.icon || props.toast.promise) &&
-          props.toast.icon !== null &&
-          canRenderNode(icon())
-        }
-      >
+      <Show when={shouldRenderIcon()}>
         <div
           class={cn('sonner-icon', 'sonner-loader', props.classes?.icon, props.toast.classes?.icon)}
         >
-          <Show when={props.toast.promise || (props.toast.type === 'loading' && !props.toast.icon)}>
-            {props.icons?.loading}
+          <Show
+            when={
+              (props.toast.promise || (props.toast.type === 'loading' && !props.toast.icon)) &&
+              props.icons?.loading
+            }
+          >
+            {(Icon) => <Dynamic component={Icon()} />}
           </Show>
-          <Show when={props.toast.type !== 'loading'}>{icon()}</Show>
+          <Show when={props.toast.type !== 'loading'}>
+            <Show
+              when={props.toast.icon}
+              fallback={
+                <Show when={configuredTypeIcon()}>{(Icon) => <Dynamic component={Icon()} />}</Show>
+              }
+            >
+              {props.toast.icon}
+            </Show>
+          </Show>
         </div>
       </Show>
 
@@ -1136,12 +1145,12 @@ export function Toaster(props: ToasterProps): JSX.Element {
     <BaseToaster
       {...props}
       icons={{
-        success: props.icons?.success ?? <SuccessIcon />,
-        error: props.icons?.error ?? <ErrorIcon />,
-        warning: props.icons?.warning ?? <WarningIcon />,
-        info: props.icons?.info ?? <InfoIcon />,
-        loading: props.icons?.loading ?? <LoadingIcon />,
-        close: props.icons?.close ?? <CloseIcon />,
+        success: props.icons?.success === undefined ? SuccessIcon : props.icons.success,
+        error: props.icons?.error === undefined ? ErrorIcon : props.icons.error,
+        warning: props.icons?.warning === undefined ? WarningIcon : props.icons.warning,
+        info: props.icons?.info === undefined ? InfoIcon : props.icons.info,
+        loading: props.icons?.loading === undefined ? LoadingIcon : props.icons.loading,
+        close: props.icons?.close === undefined ? CloseIcon : props.icons.close,
       }}
     />
   )

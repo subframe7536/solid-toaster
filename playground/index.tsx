@@ -95,10 +95,15 @@ function App() {
   // }
 
   function fireBaseToast() {
-    toast.loading('Base toaster with custom styling', {
-      toasterId: 'base',
-      style: { background: '#ecfdf5', color: '#065f46', border: '1px solid #10b981' },
-    })
+    for (const label of ['Base toaster loading A', 'Base toaster loading B']) {
+      toast.loading(label, {
+        toasterId: 'base',
+      })
+      toast.success(label, {
+        toasterId: 'base',
+        style: { background: '#ecfdf5', color: '#065f46', border: '1px solid #10b981' },
+      })
+    }
   }
 
   function fireLoadingToast() {
@@ -321,7 +326,10 @@ function App() {
       <BaseToaster
         id="base"
         theme={theme()}
-        icons={{ loading: <div class="i-lucide:loader-2 animate-spin" /> }}
+        icons={{
+          loading: () => <div class="i-lucide:loader-2 animate-spin" />,
+          success: () => <div class="i-lucide:check-circle"></div>,
+        }}
         position="bottom-left"
       />
     </main>

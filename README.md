@@ -86,8 +86,10 @@ toast.error('Something went wrong')
 toast.loading('Loading...')
 toast.promise(promise, options)
 
-<BaseToaster icons={{ loading: <div class="i-lucide:loader-2 animate-spin" /> }} />
+<BaseToaster icons={{ loading: () => <div class="i-lucide:loader-2 animate-spin" /> }} />
 ```
+
+`ToastIcons` values are Solid components. Pass a component such as `() => <Spinner />`, not a JSX element instance.
 
 ### Actions and cancel
 

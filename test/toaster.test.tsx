@@ -2,7 +2,6 @@ import '../src/styles/base.css'
 import '../src/styles/theme.css'
 
 import { fireEvent, render, screen, waitFor } from '@solidjs/testing-library'
-import type { JSX } from 'solid-js'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { toast } from '../src/state'
@@ -262,37 +261,56 @@ describe('Toaster', () => {
     })
   })
 
-  it('renders custom loading icon and close node icon', async () => {
-    const closeNode = document.createElement('span')
-    closeNode.textContent = 'X'
+  it('instantiates a configured success icon for every toast', async () => {
+    const SuccessIcon = () => <span data-testid="custom-success-icon">S</span>
 
-    render(() => (
-      <Toaster
-        closeButton
-        icons={{
-          loading: <span data-testid="custom-loader">L</span>,
-          close: closeNode as unknown as JSX.Element,
-        }}
-      />
-    ))
+    render(() => <Toaster icons={{ success: SuccessIcon }} />)
 
-    toast.loading('Loading custom icon')
-    toast('Closable icon')
+    toast.success('Success A', { duration: Number.POSITIVE_INFINITY })
+    toast.success('Success B', { duration: Number.POSITIVE_INFINITY })
 
-    expect(await screen.findByTestId('custom-loader')).toBeInTheDocument()
-    expect(await screen.findByText('X')).toBeInTheDocument()
+    const icons = await screen.findAllByTestId('custom-success-icon')
+    expect(icons).toHaveLength(2)
+
+    for (const title of ['Success A', 'Success B']) {
+      const toastItem = screen.getByText(title).closest('.sonner-toast')
+      expect(toastItem?.querySelector('[data-testid="custom-success-icon"]')).toBeInTheDocument()
+    }
   })
 
-  it('renders loading icon wrapper when icons.loading is direct node', async () => {
-    render(() => <Toaster icons={{ loading: <span data-testid="node-loader">N</span> }} />)
+  it('instantiates a configured loading icon for every loading toast', async () => {
+    const LoadingIcon = () => <span data-testid="custom-loading-icon">L</span>
 
-    toast.loading('Node loading')
+    render(() => <Toaster icons={{ loading: LoadingIcon }} />)
 
-    await screen.findByText('Node loading')
-    expect(screen.getByTestId('node-loader')).toBeInTheDocument()
+    toast.loading('Loading A')
+    toast.loading('Loading B')
 
-    const loader = document.querySelector('.sonner-loader')
-    expect(loader).toBeInTheDocument()
+    const icons = await screen.findAllByTestId('custom-loading-icon')
+    expect(icons).toHaveLength(2)
+
+    for (const title of ['Loading A', 'Loading B']) {
+      const toastItem = screen.getByText(title).closest('.sonner-toast')
+      expect(toastItem?.querySelector('[data-testid="custom-loading-icon"]')).toBeInTheDocument()
+    }
+  })
+
+  it('instantiates a configured close icon for every close button', async () => {
+    const CloseIcon = () => <span data-testid="custom-close-icon">X</span>
+
+    render(() => <Toaster closeButton icons={{ close: CloseIcon }} />)
+
+    toast('Closable A', { duration: Number.POSITIVE_INFINITY })
+    toast('Closable B', { duration: Number.POSITIVE_INFINITY })
+
+    const closeButtons = await screen.findAllByRole('button', { name: 'Close toast' })
+    const closeIcons = await screen.findAllByTestId('custom-close-icon')
+    expect(closeIcons).toHaveLength(2)
+    expect(closeButtons).toHaveLength(2)
+
+    for (const button of closeButtons) {
+      expect(button.querySelector('[data-testid="custom-close-icon"]')).toBeInTheDocument()
+    }
   })
 
   it('removes loading icon after promise toast resolves', async () => {
@@ -304,8 +322,8 @@ describe('Toaster', () => {
     render(() => (
       <Toaster
         icons={{
-          loading: <span data-testid="promise-loading-icon">L</span>,
-          success: <span data-testid="promise-success-icon">S</span>,
+          loading: () => <span data-testid="promise-loading-icon">L</span>,
+          success: () => <span data-testid="promise-success-icon">S</span>,
         }}
       />
     ))
@@ -313,6 +331,7 @@ describe('Toaster', () => {
     toast.promise(pendingPromise, {
       loading: 'Loading async toast',
       success: (value) => `Resolved: ${value}`,
+      duration: Number.POSITIVE_INFINITY,
     })
 
     expect(await screen.findByText('Loading async toast')).toBeInTheDocument()
@@ -339,6 +358,35 @@ describe('Toaster', () => {
 
     const toastItem = document.querySelector('.sonner-toast')
     expect(toastItem?.querySelector('.sonner-icon')).toBeNull()
+  })
+
+  it('preserves null configured success and loading icons', async () => {
+    render(() => <Toaster icons={{ success: null, loading: null }} />)
+
+    toast.success('Null success icon', { duration: Number.POSITIVE_INFINITY })
+    toast.loading('Null loading icon')
+
+    await screen.findByText('Null success icon')
+    await screen.findByText('Null loading icon')
+
+    for (const title of ['Null success icon', 'Null loading icon']) {
+      const toastItem = screen.getByText(title).closest('.sonner-toast')
+      expect(toastItem?.querySelector('.sonner-icon')).toBeNull()
+      expect(toastItem?.querySelector('svg')).toBeNull()
+    }
+  })
+
+  it('renders a per-toast JSX icon ahead of the configured type icon', async () => {
+    render(() => <Toaster />)
+
+    toast.success('Per-toast icon', {
+      icon: <span data-testid="per-toast-icon">I</span>,
+      duration: Number.POSITIVE_INFINITY,
+    })
+
+    expect(await screen.findByTestId('per-toast-icon')).toBeInTheDocument()
+    const toastItem = screen.getByText('Per-toast icon').closest('.sonner-toast')
+    expect(toastItem?.querySelector('.sonner-icon svg')).toBeNull()
   })
 
   it('renders text cancel/action nodes when not action objects', async () => {

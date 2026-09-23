@@ -1,4 +1,4 @@
-import type { JSX } from 'solid-js'
+import type { Component, JSX } from 'solid-js'
 
 export type ToastTypes =
   | 'normal'
@@ -68,12 +68,12 @@ export interface ToastClasses {
 }
 
 export interface ToastIcons {
-  success?: JSX.Element | null
-  info?: JSX.Element | null
-  warning?: JSX.Element | null
-  error?: JSX.Element | null
-  loading?: JSX.Element | null
-  close?: JSX.Element | null
+  success?: Component | null
+  info?: Component | null
+  warning?: Component | null
+  error?: Component | null
+  loading?: Component | null
+  close?: Component | null
 }
 
 export interface ToasterProps {
