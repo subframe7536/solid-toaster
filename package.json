@@ -51,28 +51,35 @@
     "format": "oxfmt",
     "typecheck": "tsc --noEmit",
     "qa": "oxfmt && oxlint --fix --deny-warnings && tsc --noEmit",
-    "release": "bun run test --run && bumpp --all",
-    "prepublishOnly": "bun run build"
+    "release": "nub run test --run && bumpp --all",
+    "prepublishOnly": "nub run build"
   },
   "devDependencies": {
-    "@iconify-json/lucide": "^1.2.121",
+    "@iconify-json/lucide": "^1.2.129",
     "@solidjs/testing-library": "^0.8.10",
-    "@subf/config": "^0.2.1",
-    "@subf/unocss": "^0.3.0",
+    "@subf/config": "^0.4.0",
+    "@subf/unocss": "^0.3.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@types/node": "^24.10.7",
     "bumpp": "^11.1.0",
     "cls-variant": "^1.2.0",
     "jsdom": "^30.0.1",
-    "oxfmt": "^0.61.0",
-    "oxlint": "^1.77.0",
-    "tsdown": "^0.22.14",
+    "oxfmt": "^0.66.0",
+    "oxlint": "^1.81.0",
+    "tsdown": "^0.23.0",
     "typescript": "^7.0.2",
-    "vite": "^8.2.0",
+    "vite": "^8.2.2",
     "vite-plugin-solid": "^2.11.14",
-    "vitest": "^4.1.10"
+    "vitest": "^4.1.11"
   },
   "peerDependencies": {
     "solid-js": "^1.9.11"
+  },
+  "devEngines": {
+    "packageManager": {
+      "name": "nub",
+      "version": "^0.9.2",
+      "onFail": "ignore"
+    }
   }
 }

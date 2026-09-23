@@ -9,7 +9,7 @@ export default defineConfig([
     platform: 'browser',
     plugins: [solid()],
     copy: ['./src/styles/styles.css', './src/styles/base.css', './src/styles/theme.css'],
-    dts: { oxc: true },
+    dts: true,
   },
   {
     entry,

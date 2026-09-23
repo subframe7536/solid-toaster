@@ -13,18 +13,16 @@ jobs:
   release:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
-      - uses: oven-sh/setup-bun@v2
+      - uses: nubjs/setup-nub@v0
+        with:
+          nub-version: 0.9.2
 
-      # Ensure npm 11.5.1 or later is installed
-      - name: Update npm
-        run: bun install -g npm@11
-
-      - run: bun ci
-      - run: npm publish
-      - run: bunx changelogithub
+      - run: nub ci
+      - run: nub publish --provenance --no-git-checks
+      - run: nubx changelogithub
         env:
           GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}

@@ -19,11 +19,15 @@
 
 ## Validation checklist
 
+Use `nub` for package management and script execution. Prefer `nub` / `nubx` over `node`, `bun`, `npm`, `npx`, `pnpm`, and `yarn`.
+
+If not installed, follows the instructions at https://nubjs.com/start.md to install.
+
 Run these after meaningful changes:
 
 ```bash
-bun run qa
-bun run build
+nubr qa
+nubr build
 ```
 
 ## Repo map

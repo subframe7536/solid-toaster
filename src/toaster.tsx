@@ -517,7 +517,7 @@ function ToastItem(props: ToastItemProps) {
     return props.icons?.close
   })
 
-  const styled = createMemo(() => !(props.toast.jsx || props.toast.unstyled || props.unstyled))
+  const styled = createMemo(() => !props.toast.jsx && !props.toast.unstyled && !props.unstyled)
 
   function resolveNode(value?: ToastT['title'] | ToastT['description']) {
     if (typeof value === 'function') {
