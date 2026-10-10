@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest'
 
-import { ToastState } from '../src/state'
+import { createToastState } from '../src/state'
 
 describe('toast store', () => {
-  it('generates sequential ids for new toasts', () => {
-    const store = new ToastState()
+  it('generates sequential ids for new toasts with hook createToastState', () => {
+    const store = createToastState()
 
     const first = store.create({ message: 'A' })
     const second = store.create({ message: 'B' })
@@ -14,22 +14,17 @@ describe('toast store', () => {
     expect(Number(second)).toBeGreaterThan(Number(first))
   })
 
-  it('keeps publish and active toasts in sync', () => {
-    const store = new ToastState()
-    const events: string[] = []
-
-    const unsubscribe = store.subscribe((event) => {
-      if ('title' in event) {
-        events.push(String(event.title))
-      }
-    })
+  it('tracks created and active toasts', () => {
+    const store = createToastState()
 
     store.create({ message: 'Tracked', id: 'tracked-id' })
 
-    expect(events).toContain('Tracked')
     expect(store.getHistory()).toHaveLength(1)
     expect(store.getActiveToasts()).toHaveLength(1)
+    expect(store.getActiveToasts()[0]?.title).toBe('Tracked')
 
-    unsubscribe()
+    store.dismiss('tracked-id')
+    expect(store.getHistory()).toHaveLength(1)
+    expect(store.getActiveToasts()).toHaveLength(0)
   })
 })

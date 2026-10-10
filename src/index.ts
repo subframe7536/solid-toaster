@@ -1,4 +1,4 @@
-export { toast, TOAST_STATE, type ToastState } from './state'
+export { toast, TOAST_STATE, createToastState, type ToastState } from './state'
 export { Toaster, useToaster, BaseToaster } from './toaster'
 export type {
   Action,

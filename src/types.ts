@@ -229,10 +229,11 @@ export interface ToastT {
   position?: Position
   testId?: string
   mounted?: boolean
+  bumpKey?: number
 }
 
 export interface ToastToDismiss {
-  id: ToastId
+  id?: ToastId
   dismiss: boolean
 }
 

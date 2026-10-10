@@ -817,7 +817,7 @@ describe('useToaster', () => {
     resetToastState()
   })
 
-  it('subscribes to state updates', async () => {
+  it('reacts to state updates', async () => {
     render(() => {
       const { toasts } = useToaster()
 
@@ -865,5 +865,56 @@ describe('useToaster', () => {
     await waitFor(() => {
       expect(screen.getByTestId('hook-ids')).toHaveTextContent('')
     })
+  })
+
+  it('re-creates and renders a toast with reused id after previous toast unmounted', async () => {
+    vi.useFakeTimers()
+
+    render(() => <Toaster />)
+
+    toast('Original toast', { id: 'reused-id' })
+    await screen.findByText('Original toast')
+
+    toast.dismiss('reused-id')
+    vi.advanceTimersByTime(250)
+    await waitFor(() => {
+      expect(screen.queryByText('Original toast')).not.toBeInTheDocument()
+    })
+
+    toast('Recreated toast', { id: 'reused-id' })
+    expect(await screen.findByText('Recreated toast')).toBeInTheDocument()
+  })
+
+  it('prevents duplicate toasts and bumps existing toast when preventDuplicate is true', async () => {
+    render(() => <Toaster preventDuplicate />)
+
+    toast('Duplicate content')
+    await screen.findByText('Duplicate content')
+
+    toast('Duplicate content')
+
+    const items = screen.getAllByText('Duplicate content')
+    expect(items).toHaveLength(1)
+    expect(toast.getToasts()).toHaveLength(1)
+  })
+
+  it('only prevents duplicate of the latest toast', async () => {
+    render(() => <Toaster preventDuplicate />)
+
+    toast('Toast A')
+    await screen.findByText('Toast A')
+
+    toast('Toast B')
+    await screen.findByText('Toast B')
+
+    toast('Toast A')
+    await waitFor(() => {
+      expect(screen.getAllByText('Toast A')).toHaveLength(2)
+    })
+    expect(toast.getToasts()).toHaveLength(3)
+
+    toast('Toast A')
+    expect(screen.getAllByText('Toast A')).toHaveLength(2)
+    expect(toast.getToasts()).toHaveLength(3)
   })
 })

@@ -1,16 +1,17 @@
 import type { JSX } from 'solid-js'
+import { createStore, produce, reconcile } from 'solid-js/store'
 
 import type {
   ExternalToast,
+  PromiseData,
+  PromiseIExtendedResult,
+  PromiseReturn,
   PromiseT,
   ToastEvent,
   ToastId,
   ToastT,
   ToastTitle,
   ToastTypes,
-  PromiseReturn,
-  PromiseIExtendedResult,
-  PromiseData,
 } from './types'
 
 type CreateToastData = ExternalToast & {
@@ -18,115 +19,252 @@ type CreateToastData = ExternalToast & {
   type?: ToastTypes
   promise?: PromiseT
   jsx?: JSX.Element
+  preventDuplicate?: boolean
 }
 
 function hasValidToastId(id: ToastId | undefined): id is ToastId {
   return typeof id === 'number' || (typeof id === 'string' && id.length > 0)
 }
 
-function scheduleAnimationFrame(callback: () => void) {
-  if (typeof requestAnimationFrame === 'function') {
-    requestAnimationFrame(callback)
-    return
-  }
-
-  setTimeout(callback, 0)
+function canRenderNode(node: unknown): boolean {
+  return node !== null && node !== undefined
 }
 
-export class ToastState {
-  subscribers: Array<(toast: ToastEvent) => void> = []
-  toasts: ToastT[] = []
-  dismissedToasts: Set<ToastId> = new Set<ToastId>()
-  private toastsCounter: number = 1
-
-  private publish(data: ToastT): void {
-    this.subscribers.forEach((subscriber) => subscriber(data))
-  }
-
-  public createId(): ToastId {
-    let id = this.toastsCounter
-
-    while (this.toasts.some((toast) => toast.id === id)) {
-      id += 1
+function isSameToastValue(first: unknown, second: unknown) {
+  if (typeof first === 'string' || typeof first === 'number') {
+    if (typeof second === 'string' || typeof second === 'number') {
+      return String(first) === String(second)
     }
 
-    this.toastsCounter = id + 1
-    return id
+    return false
   }
 
-  public subscribe(subscriber: (toast: ToastEvent) => void): VoidFunction {
-    this.subscribers.push(subscriber)
+  return Object.is(first, second)
+}
+
+function isSameToastContent(first: ToastT, second: ToastT) {
+  if (isSameToastValue(first.id, second.id)) {
+    return true
+  }
+
+  const hasFirstJsx = canRenderNode(first.jsx)
+  const hasSecondJsx = canRenderNode(second.jsx)
+
+  if (hasFirstJsx || hasSecondJsx) {
+    return hasFirstJsx && hasSecondJsx && isSameToastValue(first.jsx, second.jsx)
+  }
+
+  return (
+    isSameToastValue(first.title, second.title) &&
+    isSameToastValue(first.description, second.description) &&
+    isSameToastValue(first.action, second.action) &&
+    isSameToastValue(first.cancel, second.cancel) &&
+    isSameToastValue(first.type, second.type)
+  )
+}
+
+export function createToastState() {
+  const [store, setStore] = createStore<ToastT[]>([])
+  const subscribers: Array<(toast: ToastEvent) => void> = []
+  let history: ToastT[] = []
+  let toastsCounter = 1
+  let preventDuplicate = false
+
+  const publish = (data: ToastEvent): void => {
+    subscribers.forEach((subscriber) => subscriber(data))
+  }
+
+  const subscribe = (subscriber: (toast: ToastEvent) => void) => {
+    subscribers.push(subscriber)
 
     return () => {
-      const index = this.subscribers.indexOf(subscriber)
+      const index = subscribers.indexOf(subscriber)
       if (index !== -1) {
-        this.subscribers.splice(index, 1)
+        subscribers.splice(index, 1)
       }
     }
   }
 
-  public create(data: CreateToastData): ToastId {
-    const { message, ...rest } = data
-    const id = hasValidToastId(data.id) ? data.id : this.createId()
-    const alreadyExists = this.toasts.find((toast) => toast.id === id)
-    const dismissible = data.dismissible === undefined ? true : data.dismissible
+  const createId = (): ToastId => {
+    let id = toastsCounter
 
-    if (this.dismissedToasts.has(id)) {
-      this.dismissedToasts.delete(id)
+    while (store.some((toast) => toast.id === id)) {
+      id += 1
     }
 
-    if (alreadyExists) {
-      this.toasts = this.toasts.map((toast) => {
-        if (toast.id === id) {
-          const nextToast = {
-            ...toast,
-            ...data,
+    toastsCounter = id + 1
+    return id
+  }
+
+  const create = (data: CreateToastData): ToastId => {
+    const { message, ...rest } = data
+    const id = hasValidToastId(data.id) ? data.id : createId()
+    const dismissible = data.dismissible === undefined ? true : data.dismissible
+
+    if ((preventDuplicate || data.preventDuplicate) && data.id === undefined) {
+      const candidate: ToastT = { title: message, ...rest, dismissible, id }
+      let latestToast: ToastT | undefined
+
+      for (let i = store.length - 1; i >= 0; i--) {
+        const t = store[i]!
+        if (
+          !t.delete &&
+          t.toasterId === data.toasterId &&
+          (t.position ?? 'bottom-right') === (data.position ?? 'bottom-right')
+        ) {
+          latestToast = t
+          break
+        }
+      }
+
+      if (latestToast && isSameToastContent(latestToast, candidate)) {
+        setStore(
+          produce((state) => {
+            const target = state.find((t) => t.id === latestToast!.id)
+            if (target) {
+              target.bumpKey = (target.bumpKey ?? 0) + 1
+            }
+          }),
+        )
+        return latestToast.id
+      }
+    }
+
+    let publishedToast: ToastT | undefined
+
+    setStore(
+      produce((state) => {
+        const existingToast = state.find((toast) => toast.id === id)
+        if (existingToast) {
+          delete existingToast.delete
+          delete existingToast.promise
+          Object.assign(existingToast, data, {
             id,
             dismissible,
             title: message,
-          }
-
-          this.publish(nextToast)
-          return nextToast
+          })
+          publishedToast = { ...existingToast }
+        } else {
+          const newToast: ToastT = { title: message, ...rest, dismissible, id }
+          state.push(newToast)
+          publishedToast = { ...newToast }
         }
+      }),
+    )
 
-        return toast
+    if (publishedToast) {
+      publish(publishedToast)
+    }
+
+    const existingHistory = history.find((toast) => toast.id === id)
+    if (existingHistory) {
+      delete existingHistory.delete
+      delete existingHistory.promise
+      Object.assign(existingHistory, data, {
+        id,
+        dismissible,
+        title: message,
       })
     } else {
-      const data = { title: message, ...rest, dismissible, id }
-      this.publish(data)
-      this.toasts = [...this.toasts, data]
+      history.push({ title: message, ...rest, dismissible, id })
     }
 
     return id
   }
 
-  public dismiss(id?: ToastId): ToastId | undefined {
+  const dismiss = (id?: ToastId): ToastId | undefined => {
+    setStore(
+      produce((state) => {
+        if (id !== undefined) {
+          const toast = state.find((t) => t.id === id)
+          if (toast) {
+            toast.delete = true
+          }
+        } else {
+          state.forEach((toast) => {
+            toast.delete = true
+          })
+        }
+      }),
+    )
+
     if (id !== undefined) {
-      this.dismissedToasts.add(id)
-      scheduleAnimationFrame(() => {
-        this.subscribers.forEach((subscriber) => subscriber({ id, dismiss: true }))
-      })
+      const hist = history.find((t) => t.id === id)
+      if (hist) {
+        hist.delete = true
+      }
+      publish({ id, dismiss: true })
     } else {
-      this.toasts.forEach((toast) => {
-        this.dismissedToasts.add(toast.id)
-        this.subscribers.forEach((subscriber) => subscriber({ id: toast.id, dismiss: true }))
+      history.forEach((toast) => {
+        toast.delete = true
       })
+      store.forEach((toast) => {
+        publish({ id: toast.id, dismiss: true })
+      })
+      publish({ dismiss: true })
     }
 
     return id
   }
 
-  public getActiveToasts(): ToastT[] {
-    return this.toasts.filter((toast) => !this.dismissedToasts.has(toast.id))
+  const remove = (id?: ToastId): ToastId | undefined => {
+    if (id !== undefined) {
+      setStore((prev) => prev.filter((t) => t.id !== id))
+    } else {
+      setStore([])
+    }
+
+    return id
   }
 
-  public getHistory(): ToastT[] {
-    return this.toasts
+  const getActiveToasts = (): ToastT[] => {
+    return store.filter((toast) => !toast.delete)
+  }
+
+  const getHistory = (): ToastT[] => history
+
+  const reset = (): void => {
+    setStore([])
+    toastsCounter = 1
+    history = []
+    subscribers.length = 0
+  }
+
+  return {
+    get toasts(): ToastT[] {
+      return store
+    },
+    set toasts(value: ToastT[]) {
+      setStore(reconcile(value))
+    },
+    get subscribers(): Array<(toast: ToastEvent) => void> {
+      return subscribers
+    },
+    set subscribers(value: Array<(toast: ToastEvent) => void>) {
+      subscribers.length = 0
+      subscribers.push(...value)
+    },
+    get preventDuplicate(): boolean {
+      return preventDuplicate
+    },
+    set preventDuplicate(value: boolean) {
+      preventDuplicate = value
+    },
+    createId,
+    subscribe,
+    publish,
+    create,
+    dismiss,
+    remove,
+    getActiveToasts,
+    getHistory,
+    reset,
   }
 }
 
-export const TOAST_STATE: ToastState = new ToastState()
+export type ToastState = ReturnType<typeof createToastState>
+
+export const TOAST_STATE: ToastState = createToastState()
 
 function isHttpResponse(data: unknown): data is Response {
   return (
@@ -143,60 +281,53 @@ function isPromiseExtendedResult(value: unknown): value is PromiseIExtendedResul
   return typeof value === 'object' && value !== null && 'message' in value
 }
 
+const createVariant =
+  (type?: ToastTypes) =>
+  (msg: ToastTitle, data?: ExternalToast): ToastId =>
+    TOAST_STATE.create(type ? { ...data, message: msg, type } : { ...data, message: msg })
+
 /**
  * Create a default toast.
  * @example
  * message('Saved!')
  * message('Saved!', { description: 'Changes synced.' })
  */
-const message = (message: ToastTitle, data?: ExternalToast): ToastId => {
-  return TOAST_STATE.create({ ...data, message })
-}
+const message = createVariant()
 
 /**
  * Create an error toast.
  * @example
  * toast.error('Something went wrong')
  */
-const error = (message: ToastTitle, data?: ExternalToast): ToastId => {
-  return TOAST_STATE.create({ ...data, message, type: 'error' })
-}
+const error = createVariant('error')
 
 /**
  * Create a success toast.
  * @example
  * toast.success('Profile updated')
  */
-const success = (message: ToastTitle, data?: ExternalToast): ToastId => {
-  return TOAST_STATE.create({ ...data, message, type: 'success' })
-}
+const success = createVariant('success')
 
 /**
  * Create an info toast.
  * @example
  * toast.info('New version available')
  */
-const info = (message: ToastTitle, data?: ExternalToast): ToastId => {
-  return TOAST_STATE.create({ ...data, message, type: 'info' })
-}
+const info = createVariant('info')
 
 /**
  * Create a warning toast.
  * @example
  * toast.warning('Storage almost full')
  */
-const warning = (message: ToastTitle, data?: ExternalToast): ToastId => {
-  return TOAST_STATE.create({ ...data, message, type: 'warning' })
-}
+const warning = createVariant('warning')
 
 /**
  * Create a loading toast.
  * @example
  * toast.loading('Uploading files...')
  */
-const loading = (message: ToastTitle, data?: ExternalToast): ToastId => {
-  return TOAST_STATE.create({ ...data, message, type: 'loading' })
-}
+const loading = createVariant('loading')
 
 /**
  * Render a custom toast with arbitrary JSX.
@@ -215,6 +346,7 @@ const custom = (jsx: (id: ToastId) => JSX.Element, data?: ExternalToast): ToastI
 }
 
 const dismiss = (id?: ToastId): ToastId | undefined => TOAST_STATE.dismiss(id)
+const remove = (id?: ToastId): ToastId | undefined => TOAST_STATE.remove(id)
 const getHistory = (): ToastT[] => TOAST_STATE.getHistory()
 const getToasts = (): ToastT[] => TOAST_STATE.getActiveToasts()
 
@@ -254,6 +386,24 @@ const promise = <ToastData>(
   let shouldDismiss = id !== undefined
   let result: ['resolve', ToastData] | ['reject', unknown]
 
+  const resolvePayload = async (type: ToastTypes, handler: unknown, param: unknown) => {
+    shouldDismiss = false
+    const promiseData = typeof handler === 'function' ? await handler(param) : handler
+    const description =
+      typeof data.description === 'function' ? await data.description(param) : data.description
+    const toastSettings: PromiseIExtendedResult = isPromiseExtendedResult(promiseData)
+      ? promiseData
+      : { message: promiseData }
+
+    TOAST_STATE.create({
+      id,
+      promise: undefined,
+      type,
+      description,
+      ...toastSettings,
+    })
+  }
+
   const originalPromise = promiseResult
     .then(async (response) => {
       result = ['resolve', response]
@@ -265,88 +415,24 @@ const promise = <ToastData>(
       }
 
       if (isHttpResponse(response) && !response.ok) {
-        shouldDismiss = false
-
-        const errorMessage = `HTTP error! status: ${response.status}`
-
-        const promiseData =
-          typeof data.error === 'function' ? await data.error(errorMessage) : data.error
-
-        const description =
-          typeof data.description === 'function'
-            ? await data.description(errorMessage)
-            : data.description
-
-        const toastSettings: PromiseIExtendedResult = isPromiseExtendedResult(promiseData)
-          ? promiseData
-          : { message: promiseData }
-
-        TOAST_STATE.create({ id, promise: undefined, type: 'error', description, ...toastSettings })
+        await resolvePayload('error', data.error, `HTTP error! status: ${response.status}`)
         return
       }
 
       if (response instanceof Error) {
-        shouldDismiss = false
-
-        const promiseData =
-          typeof data.error === 'function' ? await data.error(response) : data.error
-
-        const description =
-          typeof data.description === 'function'
-            ? await data.description(response)
-            : data.description
-
-        const toastSettings: PromiseIExtendedResult = isPromiseExtendedResult(promiseData)
-          ? promiseData
-          : { message: promiseData }
-
-        TOAST_STATE.create({ id, promise: undefined, type: 'error', description, ...toastSettings })
+        await resolvePayload('error', data.error, response)
         return
       }
 
       if (data.success !== undefined) {
-        shouldDismiss = false
-
-        const promiseData =
-          typeof data.success === 'function' ? await data.success(response) : data.success
-
-        const description =
-          typeof data.description === 'function'
-            ? await data.description(response)
-            : data.description
-
-        const toastSettings: PromiseIExtendedResult = isPromiseExtendedResult(promiseData)
-          ? promiseData
-          : { message: promiseData }
-
-        TOAST_STATE.create({
-          id,
-          promise: undefined,
-          type: 'success',
-          description,
-          ...toastSettings,
-        })
+        await resolvePayload('success', data.success, response)
       }
     })
     .catch(async (errorValue) => {
       result = ['reject', errorValue]
 
       if (data.error !== undefined) {
-        shouldDismiss = false
-
-        const promiseData =
-          typeof data.error === 'function' ? await data.error(errorValue) : data.error
-
-        const description =
-          typeof data.description === 'function'
-            ? await data.description(errorValue)
-            : data.description
-
-        const toastSettings: PromiseIExtendedResult = isPromiseExtendedResult(promiseData)
-          ? promiseData
-          : { message: promiseData }
-
-        TOAST_STATE.create({ id, promise: undefined, type: 'error', description, ...toastSettings })
+        await resolvePayload('error', data.error, errorValue)
       }
     })
     .finally(() => {
@@ -389,9 +475,11 @@ type Toast = typeof message & {
   custom: typeof custom
   promise: typeof promise
   dismiss: typeof dismiss
+  remove: typeof remove
   loading: typeof loading
   getHistory: typeof getHistory
   getToasts: typeof getToasts
+  subscribe: (typeof TOAST_STATE)['subscribe']
 }
 
 /**
@@ -409,9 +497,11 @@ const toast = Object.assign(message, {
   custom,
   promise,
   dismiss,
+  remove,
   loading,
   getHistory,
   getToasts,
+  subscribe: TOAST_STATE.subscribe,
 }) as Toast
 
 export {
@@ -424,6 +514,7 @@ export {
   loading,
   custom,
   dismiss,
+  remove,
   getHistory,
   getToasts,
   promise,

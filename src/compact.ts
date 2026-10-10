@@ -10,4 +10,5 @@ export {
   warning,
   getToasts,
   getHistory,
+  remove,
 } from './state'

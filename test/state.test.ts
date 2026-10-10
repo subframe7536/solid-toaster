@@ -1,10 +1,8 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 
-import { TOAST_STATE, ToastState, toast } from '../src/state'
+import { createToastState, toast } from '../src/state'
 
 import { resetToastState } from './helpers/toast-state'
-
-const waitForAnimationFrame = () => new Promise((resolve) => setTimeout(resolve, 0))
 
 describe('toast state', () => {
   beforeEach(() => {
@@ -92,30 +90,19 @@ describe('toast state', () => {
     expect(history[0]?.dismissible).toBe(false)
   })
 
-  it('publishes dismiss events for one toast and all toasts', async () => {
-    const events: Array<{ id: string; dismiss?: boolean }> = []
-    const unsubscribe = TOAST_STATE.subscribe((event) => {
-      events.push(event as { id: string; dismiss?: boolean })
-    })
-
+  it('dismisses one toast and all toasts', () => {
     toast('One', { id: 'one' })
     toast('Two', { id: 'two' })
 
     toast.dismiss('one')
-    await waitForAnimationFrame()
+    expect(toast.getToasts().map((item) => item.id)).toEqual(['two'])
 
     toast.dismiss()
-
-    expect(events.filter((event) => event.dismiss)).toHaveLength(2)
-    expect(events.some((event) => event.id === 'one' && event.dismiss)).toBe(true)
-    expect(events.some((event) => event.id === 'two' && event.dismiss)).toBe(true)
     expect(toast.getToasts()).toHaveLength(0)
-
-    unsubscribe()
   })
 
   it('skips numeric ids already used by explicit toasts', () => {
-    const state = new ToastState()
+    const state = createToastState()
 
     expect(state.create({ message: 'Explicit', id: 1 })).toBe(1)
     expect(state.create({ message: 'Automatic' })).toBe(2)
@@ -243,5 +230,49 @@ describe('toast state', () => {
 
     expect(typeof generatedId).toBe('number')
     expect(toast.getHistory()).toHaveLength(1)
+  })
+
+  it('removes toast from store via remove', () => {
+    toast('To remove', { id: 'rem-id' })
+    expect(toast.getToasts()).toHaveLength(1)
+
+    toast.remove('rem-id')
+    expect(toast.getToasts()).toHaveLength(0)
+    expect(toast.getHistory()).toHaveLength(1)
+  })
+
+  it('notifies subscribers on create and dismiss, and supports unsubscribe', () => {
+    const events: any[] = []
+    const unsubscribe = toast.subscribe((event) => {
+      events.push(event)
+    })
+
+    toast('Subscribed toast', { id: 'sub-id' })
+    expect(events).toHaveLength(1)
+    expect(events[0]).toMatchObject({ id: 'sub-id', title: 'Subscribed toast' })
+
+    toast.dismiss('sub-id')
+    expect(events).toHaveLength(2)
+    expect(events[1]).toEqual({ id: 'sub-id', dismiss: true })
+
+    unsubscribe()
+    toast('After unsub')
+    expect(events).toHaveLength(2)
+  })
+
+  it('notifies subscribers when dismiss is called without id', () => {
+    const events: any[] = []
+    toast.subscribe((event) => {
+      events.push(event)
+    })
+
+    toast('Toast 1', { id: 't1' })
+    toast('Toast 2', { id: 't2' })
+    expect(events).toHaveLength(2)
+
+    toast.dismiss()
+    expect(events).toContainEqual({ id: 't1', dismiss: true })
+    expect(events).toContainEqual({ id: 't2', dismiss: true })
+    expect(events).toContainEqual({ dismiss: true })
   })
 })
