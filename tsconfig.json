@@ -15,10 +15,10 @@
     "resolveJsonModule": true,
     "noEmit": true,
     "allowImportingTsExtensions": true,
+    "lib": ["ESNext", "DOM", "DOM.Iterable"],
+    "noUncheckedIndexedAccess": true,
     "jsx": "preserve",
     "jsxImportSource": "solid-js",
-    "lib": ["ES2023", "DOM"],
-    "types": ["vite/client"],
-    "noUncheckedIndexedAccess": true
+    "types": ["vite/client", "node"]
   }
 }
